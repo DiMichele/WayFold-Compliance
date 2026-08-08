@@ -23,3 +23,6 @@ Thumbs.db
 
 # Orchestrator local state (keep config templates if any)
 .wayfold/state.json
+.wayfold/results/
+.wayfold/logs/
+.wayfold/*.lock
