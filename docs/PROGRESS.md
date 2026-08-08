@@ -38,6 +38,12 @@
 - Core CISO: compose ufficiale in `vendor/ciso-assistant-community` (locale)
 - Automazione: `.\apps\wayfold-compliance\automation\overnight.ps1`
 
+## Git
+
+- Remote: https://github.com/DiMichele/WayFold-Compliance
+- Cartella locale: `apps/wayfold-compliance/` (repo git annidato, come Bills)
+- `vendor/` non versionato
+
 ## Problemi aperti
 
 - Auth Cursor Agent CLI per unattended overnight
