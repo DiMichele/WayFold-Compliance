@@ -9,9 +9,27 @@
 **Phase 5 CLOSED (verification PASS)** — vedi `PHASE5-VERIFICATION.md`.  
 **Phase 6 CLOSED (verification PASS)** — vedi `PHASE6-VERIFICATION.md`.  
 
+## Architecture & Security Realignment (Slice 0)
+
+Status: **PARTIAL → security/domain P0 landed; core cutover deferred by slice**
+
+Docs: `CORE-REALIGNMENT-PLAN.md`, `ROUTE-PERMISSION-MATRIX.md`, `SECURITY-REMEDIATION-REPORT.md`, `DATA-MIGRATION-REPORT.md`, `FINAL-INDEPENDENT-VERIFICATION-READY.md`
+
+Delivered:
+- CoreGrcGateway boundary (`engine/core_gateway.py`)
+- P0 route auth (control/evidence/task/settings/audit/client/program)
+- CSRF + login throttle + session revoke + MFA enforce (prod)
+- State-changing GET → 405; feature flags server-side OFF
+- Gap engine rewrite (findings-only, delta isolation)
+- Mapping: only APPROVED operational; no implicit FULL
+- Evidence multipart binary SoT; clients.json first-class
+- Deploy: no world-writable chmod; `/api/build-info`
+
+Ready for real client data: **NO**
+
 ## Product Realignment — Knowledge Base Authoring
 
-Status: **IN PROGRESS → COMPLETE (UI authoring workflow)**
+Status: **COMPLETE (UI authoring workflow)**
 
 - Navigazione semplificata: Area di lavoro / Programma corrente / Knowledge Base / Amministrazione
 - Feature non-core nascoste dalla nav primaria (owners, deadlines, AI, connectors, auto-evidence, sources, FW suggestions)

@@ -35,7 +35,7 @@ from engine.consultant_views import (
     owner_view,
     task_view,
 )
-from engine.gap_assessment import GapFilter, build_gap_rows, filter_gap_rows
+from engine.gap_assessment import GapFilter, build_gap_rows, filter_gap_rows, gap_counters
 from engine.impact import rank_control_impact
 from engine.portfolio import (
     DEFAULT_REGISTRY,
@@ -48,6 +48,7 @@ from engine.readiness import framework_readiness
 from engine.reports import report_csv, report_html
 from engine.serialize import to_jsonable
 from engine.auth_session import (
+    assert_session_secret_configured,
     auth_configured,
     clear_session_cookie_header,
     forbidden_page_html,
@@ -62,16 +63,35 @@ from engine.auth_session import (
 )
 from engine.rbac import (
     PERM_AUDIT_READ,
+    PERM_CONTROL_WRITE,
     PERM_EVIDENCE_DOWNLOAD,
+    PERM_EVIDENCE_WRITE,
     PERM_FRAMEWORK_PUBLISH,
     PERM_KB_READ,
     PERM_KB_WRITE,
     PERM_REPORT_GENERATE,
+    PERM_TASK_WRITE,
+    PERM_USER_ADMIN,
     Role,
     has_permission,
     parse_role,
     role_is_superuser,
 )
+from engine.csrf import (
+    CSRF_FORM_FIELD,
+    CSRF_HEADER,
+    csrf_cookie_header,
+    csrf_token_from_cookie_header,
+    issue_csrf_token,
+    validate_csrf,
+)
+from engine.feature_flags import feature_allowed, is_feature_path
+from engine.login_throttle import (
+    check_login_allowed,
+    record_login_failure,
+    record_login_success,
+)
+from engine.session_revoke import bump_user_sessions, revoke_token
 from engine import audit as audit_mod
 from engine import authoring_routes
 from engine import evidence_storage
@@ -170,6 +190,13 @@ def _auth_context_from_request(handler: "Handler", qs: dict) -> AuthContext | No
     if session is not None:
         role = parse_role(session.role)
         tenants = set(session.tenant_ids)
+        # Re-read consultant assignments so client.create → assign is live without re-login
+        if role == Role.CONSULTANT and session.username:
+            from engine.users import load_assignments
+
+            assigned = load_assignments().get(session.username.lower())
+            if assigned is not None:
+                tenants = set(assigned)
         is_super = session.is_superuser or role_is_superuser(role)
         # Sliding session refresh attached for handler to emit
         handler._session_refresh_token = refresh_session(session)  # type: ignore[attr-defined]
@@ -574,10 +601,15 @@ class Handler(BaseHTTPRequestHandler):
     ):
         from urllib.parse import quote
 
+        parsed = urlparse(self.path)
+        path = parsed.path.rstrip("/") or "/"
+        feat = is_feature_path(path)
+        if feat and not feature_allowed(feat):
+            self._deny(404, "feature_disabled")
+            return None
+
         ctx = _auth_context_from_request(self, qs)
         if ctx is None or (not ctx.is_superuser and not ctx.actor_tenant_ids):
-            parsed = urlparse(self.path)
-            path = parsed.path.rstrip("/") or "/"
             headers = getattr(self, "headers", None)
             accept = headers.get("Accept") if headers is not None else None
             if wants_html(accept, path):
@@ -587,8 +619,6 @@ class Handler(BaseHTTPRequestHandler):
             self._deny(401, "authentication_required")
             return None
         if permission and not has_permission(ctx.role, permission):
-            parsed = urlparse(self.path)
-            path = parsed.path.rstrip("/") or "/"
             headers = getattr(self, "headers", None)
             accept = headers.get("Accept") if headers is not None else None
             if wants_html(accept, path):
@@ -612,8 +642,6 @@ class Handler(BaseHTTPRequestHandler):
                     tenant_id=target_tenant_id,
                     detail=decision.reason,
                 )
-                parsed = urlparse(self.path)
-                path = parsed.path.rstrip("/") or "/"
                 headers = getattr(self, "headers", None)
                 accept = headers.get("Accept") if headers is not None else None
                 if wants_html(accept, path):
@@ -624,6 +652,59 @@ class Handler(BaseHTTPRequestHandler):
                 return None
         self._auth_ctx = ctx  # type: ignore[attr-defined]
         return ctx.actor_tenant_ids, ctx.is_superuser
+
+    def _require_csrf(self, form: dict | None = None) -> bool:
+        """Validate CSRF for state-changing requests. Returns False if denied."""
+        if os.environ.get("WAYFOLD_CSRF_DISABLE", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            return True
+        if os.environ.get("WAYFOLD_TEST_MODE", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            # Tests may opt into CSRF explicitly via WAYFOLD_CSRF_ENFORCE_IN_TEST=1
+            if os.environ.get("WAYFOLD_CSRF_ENFORCE_IN_TEST", "").strip().lower() not in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }:
+                return True
+        headers = getattr(self, "headers", None)
+        cookie_hdr = headers.get("Cookie") if headers is not None else None
+        cookie_tok = csrf_token_from_cookie_header(cookie_hdr)
+        form_tok = None
+        if form:
+            form_tok = (form.get(CSRF_FORM_FIELD) or form.get("csrf_token") or [""])[0]
+        header_tok = headers.get(CSRF_HEADER) if headers is not None else None
+        err = validate_csrf(
+            method=getattr(self, "command", "POST"),
+            cookie_token=cookie_tok,
+            form_token=form_tok,
+            header_token=header_tok,
+            origin=headers.get("Origin") if headers is not None else None,
+            referer=headers.get("Referer") if headers is not None else None,
+            host=headers.get("Host") if headers is not None else None,
+        )
+        if err:
+            self._deny(403, err)
+            return False
+        return True
+
+    def _ensure_csrf_cookie(self, extra: dict | None = None) -> dict:
+        headers = dict(extra or {})
+        cookie_hdr = self.headers.get("Cookie") if getattr(self, "headers", None) else None
+        if not csrf_token_from_cookie_header(cookie_hdr):
+            headers["Set-Cookie"] = csrf_cookie_header(
+                issue_csrf_token(), secure=self._request_is_secure()
+            )
+        return headers
 
     def do_GET(self):  # noqa: N802
         parsed = urlparse(self.path)
@@ -672,11 +753,43 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
 
         if path == "/logout":
+            cookie_hdr = self.headers.get("Cookie")
+            sess = session_from_cookie_header(cookie_hdr)
+            if sess and cookie_hdr:
+                from http.cookies import SimpleCookie
+
+                jar = SimpleCookie()
+                try:
+                    jar.load(cookie_hdr)
+                    morsel = jar.get("wf_session")
+                    if morsel:
+                        revoke_token(morsel.value)
+                except Exception:  # noqa: BLE001
+                    pass
             return self._redirect(
                 "/login",
                 extra_headers={
                     "Set-Cookie": clear_session_cookie_header(secure=self._request_is_secure())
                 },
+            )
+
+        if path == "/api/build-info":
+            auth = self._gate(qs)
+            if auth is None:
+                return
+            info = {
+                "build_sha": os.environ.get("WAYFOLD_BUILD_SHA")
+                or os.environ.get("GIT_COMMIT")
+                or "unknown",
+                "built_at": os.environ.get("WAYFOLD_BUILT_AT") or "",
+                "app_version": os.environ.get("WAYFOLD_APP_VERSION") or "0.1.0",
+                "schema_version": os.environ.get("WAYFOLD_SCHEMA_VERSION") or "1",
+                "review_sync_sha": os.environ.get("WAYFOLD_REVIEW_SYNC_SHA") or "",
+            }
+            return self._send(
+                200,
+                json.dumps(info, ensure_ascii=False).encode("utf-8"),
+                "application/json",
             )
 
         # Knowledge Base / client-program authoring surfaces
@@ -737,33 +850,67 @@ class Handler(BaseHTTPRequestHandler):
             flat["tab"] = "users"
             return self._redirect(f"/settings?{urlencode(flat)}")
 
-        if path in {"/evidence/new", "/tasks/new"}:
-            auth = self._gate(qs)
+        if path in {"/evidence/new", "/tasks/new", "/tasks/edit"}:
+            need_perm = (
+                PERM_EVIDENCE_WRITE if path.startswith("/evidence") else PERM_TASK_WRITE
+            )
+            program = _resolve_program(qs)
+            if program is None:
+                return self._deny(404, "program_not_found")
+            auth = self._gate(
+                qs, target_tenant_id=program.tenant_id, permission=need_perm
+            )
             if auth is None:
                 return
-            nav = _nav_qs(qs)
-            title = "Nuova evidenza" if path.endswith("evidence/new") else "Nuova attività"
-            target = "/evidence" if "evidence" in path else "/tasks"
-            body = (
-                f"<div class='page-head'><h1>{title}</h1>"
-                f"<p class='subtitle'>Completa i campi e salva. Il collegamento al programma corrente viene preservato.</p></div>"
-                f"<form method='post' action='{path}?{nav}' class='panel' style='padding:18px'>"
-                f"<div class='form-grid'>"
-                f"<div class='form-field full'><label>Titolo / Nome</label><input name='title' required></div>"
-                f"<div class='form-field'><label>Owner</label><input name='owner'></div>"
-                f"<div class='form-field'><label>Scadenza / Validità</label><input type='date' name='due_date'></div>"
-                f"<div class='form-field full'><label>Note</label><textarea name='notes'></textarea></div>"
-                f"</div>"
-                f"<div class='page-actions' style='margin-top:14px'>"
-                f"<button class='btn primary' type='submit'>Salva</button>"
-                f"<a class='btn ghost' href='{target}?{nav}'>Annulla</a></div></form>"
-            )
+            nav = _nav_qs(qs, program_id=program.program_id)
+            csrf = issue_csrf_token()
+            if path.startswith("/evidence"):
+                title = "Nuova evidenza"
+                target = "/evidence"
+                body = (
+                    f"<div class='page-head'><h1>{title}</h1>"
+                    f"<p class='subtitle'>Carica un file binario reale collegato al programma.</p></div>"
+                    f"<form method='post' action='/evidence/new?{nav}' class='panel' style='padding:18px' "
+                    f"enctype='multipart/form-data'>"
+                    f"<input type='hidden' name='csrf_token' value='{csrf}'>"
+                    f"<div class='form-grid'>"
+                    f"<div class='form-field full'><label>Titolo</label><input name='title' required></div>"
+                    f"<div class='form-field full'><label>File</label><input type='file' name='file' required></div>"
+                    f"<div class='form-field'><label>Owner</label><input name='owner'></div>"
+                    f"<div class='form-field'><label>Validità</label><input type='date' name='valid_until'></div>"
+                    f"<div class='form-field'><label>Sensibilità</label>"
+                    f"<select name='sensitivity'><option value='CONFIDENTIAL'>Confidenziale</option>"
+                    f"<option value='NORMAL'>Normale</option><option value='RESTRICTED'>Riservata</option></select></div>"
+                    f"<div class='form-field full'><label>Controlli collegati (codici, separati da virgola)</label>"
+                    f"<input name='control_refs'></div>"
+                    f"<div class='form-field full'><label>Descrizione</label><textarea name='notes'></textarea></div>"
+                    f"</div>"
+                    f"<div class='page-actions' style='margin-top:14px'>"
+                    f"<button class='btn primary' type='submit'>Carica evidenza</button>"
+                    f"<a class='btn ghost' href='{target}?{nav}'>Annulla</a></div></form>"
+                )
+            else:
+                from engine import task_service
+
+                task_id = qs.get("task_id", [""])[0]
+                existing = task_service.get_task(program, task_id) if task_id else None
+                title = "Modifica attività" if existing else "Nuova attività"
+                target = "/tasks"
+                body = task_service.render_task_form(
+                    nav_qs=nav,
+                    csrf=csrf,
+                    task=existing,
+                    program=program,
+                )
             return self._send(
                 200,
-                render_shell(title, nav, body, lang=lang_from_qs(qs), active_path=target, breadcrumb=title).encode(
-                    "utf-8"
-                ),
+                render_shell(
+                    title, nav, body, lang=lang_from_qs(qs), active_path=target, breadcrumb=title
+                ).encode("utf-8"),
                 "text/html; charset=utf-8",
+                extra_headers=self._ensure_csrf_cookie(
+                    {"Set-Cookie": csrf_cookie_header(csrf, secure=self._request_is_secure())}
+                ),
             )
 
         # Clients directory (admin) — distinct from Portfolio operations
@@ -879,68 +1026,13 @@ class Handler(BaseHTTPRequestHandler):
                 "text/html; charset=utf-8",
             )
 
-        if path == "/api/frameworks/clone":
-            auth = self._gate(qs, permission=PERM_KB_WRITE)
-            if auth is None:
-                return
-            vid = qs.get("version_id", [""])[0]
-            new_ver = qs.get("new_version", [""])[0]
-            if not vid or not new_ver:
-                return self._deny(400, "version_id_and_new_version_required")
-            try:
-                draft = fw_versions.clone_draft(vid, new_version=new_ver)
-            except KeyError:
-                return self._deny(404, "version_not_found")
-            ctx = getattr(self, "_auth_ctx", None)
-            audit_mod.record_event(
-                actor_user_id=(ctx.username if ctx else "unknown") or "unknown",
-                action=audit_mod.FRAMEWORK_VERSION_CLONE,
-                entity_type="FrameworkVersion",
-                entity_id=draft.id,
-                new_value={"version": draft.version, "cloned_from": vid},
-            )
-            return self._send(
-                200,
-                json.dumps(to_jsonable(draft), ensure_ascii=False).encode("utf-8"),
-                "application/json",
-            )
-
-        if path == "/api/frameworks/publish":
-            auth = self._gate(qs, permission=PERM_FRAMEWORK_PUBLISH)
-            if auth is None:
-                return
-            vid = qs.get("version_id", [""])[0]
-            try:
-                pub = fw_versions.publish_version(vid)
-            except KeyError:
-                return self._deny(404, "version_not_found")
-            ctx = getattr(self, "_auth_ctx", None)
-            audit_mod.record_event(
-                actor_user_id=(ctx.username if ctx else "unknown") or "unknown",
-                action=audit_mod.FRAMEWORK_VERSION_PUBLISHED,
-                entity_type="FrameworkVersion",
-                entity_id=pub.id,
-                new_value={"version": pub.version, "status": pub.status},
-            )
-            return self._send(
-                200,
-                json.dumps(to_jsonable(pub), ensure_ascii=False).encode("utf-8"),
-                "application/json",
-            )
-
-        if path == "/api/frameworks/patch":
-            auth = self._gate(qs, permission=PERM_KB_WRITE)
-            if auth is None:
-                return
-            vid = qs.get("version_id", [""])[0]
-            # Intentionally no body patch via GET — deny published via service
-            try:
-                fw_versions.update_published_denied(vid, {"notes": "denied_probe"})
-            except fw_versions.ImmutabilityError:
-                return self._deny(403, "published_version_immutable")
-            except KeyError:
-                return self._deny(404, "version_not_found")
-            return self._deny(400, "use_clone_workflow")
+        # State-changing framework ops are POST-only (no GET mutations / probe routes)
+        if path in {
+            "/api/frameworks/clone",
+            "/api/frameworks/publish",
+            "/api/frameworks/patch",
+        }:
+            return self._deny(405, "method_not_allowed")
 
         # Mapping management (KB editor; optional program overlay)
         if path in {"/mappings", "/api/mappings"}:
@@ -1049,18 +1141,48 @@ class Handler(BaseHTTPRequestHandler):
                 "application/json",
             )
 
-        # Audit log
+        # Audit log — tenant filter enforced server-side (never trust ?tenant_id= alone)
         if path in {"/audit", "/api/audit"}:
             auth = self._gate(qs, permission=PERM_AUDIT_READ)
             if auth is None:
                 return
+            actor_tenants, is_super = auth
+            ctx = getattr(self, "_auth_ctx", None)
+            requested_tenant = qs.get("tenant_id", [""])[0] or None
+            if is_super:
+                scope_tenant = requested_tenant
+                allowed_tenants = None
+            else:
+                allowed_tenants = set(actor_tenants)
+                if requested_tenant:
+                    if requested_tenant not in allowed_tenants:
+                        return self._deny(403, "tenant_out_of_scope")
+                    scope_tenant = requested_tenant
+                else:
+                    scope_tenant = None
             events = audit_mod.list_events(
-                tenant_id=qs.get("tenant_id", [""])[0] or None,
+                tenant_id=scope_tenant,
                 actor_user_id=qs.get("actor", [""])[0] or None,
                 action=qs.get("action", [""])[0] or None,
                 date_from=qs.get("date_from", [""])[0] or None,
                 date_to=qs.get("date_to", [""])[0] or None,
             )
+            if allowed_tenants is not None:
+                events = [
+                    e
+                    for e in events
+                    if not getattr(e, "tenant_id", None)
+                    or e.tenant_id in allowed_tenants
+                    or getattr(e, "tenant_id", None) in {"", None, "*"}
+                ]
+                # Drop other tenants' scoped events; keep explicit globals only if policy allows
+                role = ctx.role if ctx else Role.VIEWER
+                if role in {Role.CLIENT_MEMBER, Role.VIEWER, Role.CLIENT_ADMIN}:
+                    events = [
+                        e
+                        for e in events
+                        if getattr(e, "tenant_id", None) in allowed_tenants
+                    ]
             nav = _nav_qs(qs)
             if path == "/audit":
                 return self._send(
@@ -1069,7 +1191,7 @@ class Handler(BaseHTTPRequestHandler):
                         events,
                         nav,
                         filters={
-                            "tenant_id": qs.get("tenant_id", [""])[0],
+                            "tenant_id": requested_tenant or "",
                             "actor": qs.get("actor", [""])[0],
                             "action": qs.get("action", [""])[0],
                             "date_from": qs.get("date_from", [""])[0],
@@ -1086,29 +1208,38 @@ class Handler(BaseHTTPRequestHandler):
                 "application/json",
             )
 
-        # Settings
+        # Settings — global user directory requires PERM_USER_ADMIN
         if path in {"/settings", "/api/settings"}:
             auth = self._gate(qs)
             if auth is None:
                 return
+            ctx = getattr(self, "_auth_ctx", None)
+            can_admin = ctx is not None and (
+                has_permission(ctx.role, PERM_USER_ADMIN)
+                or ctx.role == Role.SUPER_ADMIN
+            )
             nav = _nav_qs(qs)
             ai_settings = None
             programs = load_portfolio_programs(_active_registry())
-            if programs:
+            if programs and can_admin:
                 tid = programs[0][0].tenant_id
                 ai_settings = _ai_service().tenant_settings(tid)
+            users_out = list_users() if can_admin else []
+            assignments_out = load_assignments() if can_admin else {}
             if path == "/settings":
                 return self._send(
                     200,
                     product_pages.settings_page(
                         nav_qs=nav,
-                        ai_settings=ai_settings,
-                        users=list_users(),
-                        assignments=load_assignments(),
+                        ai_settings=ai_settings if can_admin else None,
+                        users=users_out,
+                        assignments=assignments_out,
                         mfa_status={"supported": True},
                     ).encode("utf-8"),
                     "text/html; charset=utf-8",
                 )
+            if not can_admin:
+                return self._deny(403, "permission_denied")
             return self._send(
                 200,
                 json.dumps(
@@ -1120,9 +1251,9 @@ class Handler(BaseHTTPRequestHandler):
                                 "tenant_ids": u.tenant_ids,
                                 "mfa_enabled": u.mfa_enabled,
                             }
-                            for u in list_users()
+                            for u in users_out
                         ],
-                        "assignments": load_assignments(),
+                        "assignments": assignments_out,
                     },
                     ensure_ascii=False,
                 ).encode("utf-8"),
@@ -1360,33 +1491,8 @@ class Handler(BaseHTTPRequestHandler):
                     json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                     "application/json",
                 )
-            if path == "/api/regulatory/check":
-                source_id = qs.get("source_id", [""])[0]
-                source = store.get_source(source_id)
-                if source is None:
-                    return self._deny(404, "source_not_found")
-                result = check_source(source, store)
-                return self._send(
-                    200,
-                    json.dumps(to_jsonable(result), ensure_ascii=False).encode("utf-8"),
-                    "application/json",
-                )
-            if path == "/api/regulatory/review":
-                change_id = qs.get("change_id", [""])[0]
-                status_raw = qs.get("status", [""])[0].upper()
-                try:
-                    status = ChangeStatus(status_raw)
-                except ValueError:
-                    return self._deny(400, "invalid_status")
-                try:
-                    change = review_change(change_id, store, status=status)
-                except KeyError:
-                    return self._deny(404, "change_not_found")
-                return self._send(
-                    200,
-                    json.dumps(to_jsonable(change), ensure_ascii=False).encode("utf-8"),
-                    "application/json",
-                )
+            if path in {"/api/regulatory/check", "/api/regulatory/review"}:
+                return self._deny(405, "method_not_allowed")
 
         # Phase 6 — Automated Evidence (Prowler/fixture → SUPPORTING evidence; human review)
         if path in {
@@ -1441,58 +1547,8 @@ class Handler(BaseHTTPRequestHandler):
                     "application/json",
                 )
 
-            if path == "/api/auto-evidence/ingest":
-                connector_id = qs.get("connector_id", [""])[0]
-                if not connector_id:
-                    return self._deny(400, "connector_id_required")
-                program = None
-                if qs.get("program", [None])[0] or qs.get("program_id", [None])[0]:
-                    try:
-                        program = _resolve_program(qs)
-                    except Exception as exc:  # noqa: BLE001
-                        return self._deny(404, f"program_not_found: {exc}")
-                try:
-                    result = auto.ingest_connector(
-                        connector_id,
-                        program=program,
-                        actor_tenant_ids=actor_tenants,
-                        is_superuser=is_super,
-                    )
-                except KeyError as exc:
-                    return self._deny(404, str(exc))
-                except PermissionError as exc:
-                    return self._deny(403, str(exc))
-                return self._send(
-                    200,
-                    json.dumps(to_jsonable(result), ensure_ascii=False).encode("utf-8"),
-                    "application/json",
-                )
-
-            if path == "/api/auto-evidence/review":
-                eid = qs.get("evidence_id", [""])[0]
-                status_raw = qs.get("status", [""])[0].upper()
-                try:
-                    status = EvidenceReviewStatus(status_raw)
-                except ValueError:
-                    return self._deny(400, "invalid_status")
-                try:
-                    rec = auto.review_evidence(
-                        eid,
-                        status=status,
-                        actor_tenant_ids=actor_tenants,
-                        is_superuser=is_super,
-                    )
-                except KeyError:
-                    return self._deny(404, "evidence_not_found")
-                except PermissionError as exc:
-                    return self._deny(403, str(exc))
-                except ValueError as exc:
-                    return self._deny(400, str(exc))
-                return self._send(
-                    200,
-                    json.dumps(to_jsonable(rec), ensure_ascii=False).encode("utf-8"),
-                    "application/json",
-                )
+            if path in {"/api/auto-evidence/ingest", "/api/auto-evidence/review"}:
+                return self._deny(405, "method_not_allowed")
 
             if path == "/api/auto-evidence/counts":
                 try:
@@ -1594,30 +1650,7 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
             if path == "/api/ai/review":
-                sid = qs.get("suggestion_id", [""])[0]
-                status_raw = qs.get("status", [""])[0].upper()
-                try:
-                    status = SuggestionReviewStatus(status_raw)
-                except ValueError:
-                    return self._deny(400, "invalid_status")
-                try:
-                    sug = ai.review_suggestion(
-                        sid,
-                        status=status,
-                        actor_tenant_ids=actor_tenants,
-                        is_superuser=is_super,
-                    )
-                except KeyError:
-                    return self._deny(404, "suggestion_not_found")
-                except PermissionError as exc:
-                    return self._deny(403, str(exc))
-                except ValueError as exc:
-                    return self._deny(400, str(exc))
-                return self._send(
-                    200,
-                    json.dumps(to_jsonable(sug), ensure_ascii=False).encode("utf-8"),
-                    "application/json",
-                )
+                return self._deny(405, "method_not_allowed")
 
             # Suggest endpoints need a program or change context.
             # Explicit program only — never inject default Michele into another tenant's AI call.
@@ -1948,6 +1981,139 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/") or "/"
         qs = parse_qs(parsed.query)
 
+        # Binary evidence upload MUST read raw bytes before any text decode
+        if path == "/evidence/new":
+            program = _resolve_program(qs)
+            if program is None:
+                return self._deny(404, "program_not_found")
+            auth = self._gate(
+                qs, target_tenant_id=program.tenant_id, permission=PERM_EVIDENCE_WRITE
+            )
+            if auth is None:
+                return
+            length = int(self.headers.get("Content-Length") or "0")
+            raw_bytes = self.rfile.read(
+                max(0, min(length, evidence_storage.MAX_UPLOAD_BYTES + 64_000))
+            )
+            ctype = self.headers.get("Content-Type") or ""
+            from engine.multipart_util import parse_multipart
+
+            try:
+                fields, files = parse_multipart(ctype, raw_bytes)
+            except ValueError as exc:
+                return self._deny(400, str(exc))
+            form_for_csrf = {k: [v] for k, v in fields.items()}
+            if not self._require_csrf(form_for_csrf):
+                return
+            file_part = files.get("file")
+            if not file_part:
+                return self._deny(400, "file_required")
+            title = (fields.get("title") or file_part.filename or "Evidenza").strip()
+            ctx = getattr(self, "_auth_ctx", None)
+            actor_tenants, is_super = auth
+            ectx = evidence_storage.AuthzContext(
+                username=(ctx.username if ctx else "unknown") or "unknown",
+                role=ctx.role if ctx else Role.VIEWER,
+                actor_tenant_ids=set(actor_tenants),
+                is_superuser=is_super,
+            )
+            try:
+                item = evidence_storage.store_evidence(
+                    tenant_id=program.tenant_id,
+                    program_id=program.program_id,
+                    title=title,
+                    filename=file_part.filename,
+                    content=file_part.content,
+                    content_type=file_part.content_type
+                    or fields.get("content_type")
+                    or "",
+                    control_refs=[
+                        c.strip()
+                        for c in (fields.get("control_refs") or "").split(",")
+                        if c.strip()
+                    ],
+                    valid_until=fields.get("valid_until") or None,
+                    notes=fields.get("notes") or "",
+                    sensitivity=fields.get("sensitivity") or "CONFIDENTIAL",
+                    ctx=ectx,
+                )
+            except PermissionError as exc:
+                return self._deny(403, str(exc))
+            except ValueError as exc:
+                return self._deny(400, str(exc))
+            audit_mod.record_event(
+                actor_user_id=ectx.username,
+                action=audit_mod.EVIDENCE_CREATED,
+                entity_type="Evidence",
+                entity_id=item.id,
+                tenant_id=program.tenant_id,
+            )
+            return self._redirect(
+                f"/evidence?{_nav_qs(qs, program_id=program.program_id)}"
+            )
+
+        # Framework mutations (POST only)
+        if path in {"/api/frameworks/clone", "/api/frameworks/publish"}:
+            length = int(self.headers.get("Content-Length") or "0")
+            raw = self.rfile.read(max(0, min(length, 64_000))).decode("utf-8", "replace")
+            ctype = (self.headers.get("Content-Type") or "").lower()
+            if "application/json" in ctype or raw.strip().startswith("{"):
+                try:
+                    payload = json.loads(raw) if raw.strip() else {}
+                except json.JSONDecodeError:
+                    return self._deny(400, "invalid_json")
+                form = {k: [str(v)] for k, v in payload.items()}
+            else:
+                form = parse_qs(raw, keep_blank_values=True)
+            if not self._require_csrf(form):
+                return
+            if path == "/api/frameworks/clone":
+                auth = self._gate(qs, permission=PERM_KB_WRITE)
+                if auth is None:
+                    return
+                vid = (form.get("version_id") or qs.get("version_id") or [""])[0]
+                new_ver = (form.get("new_version") or qs.get("new_version") or [""])[0]
+                if not vid or not new_ver:
+                    return self._deny(400, "version_id_and_new_version_required")
+                try:
+                    draft = fw_versions.clone_draft(vid, new_version=new_ver)
+                except KeyError:
+                    return self._deny(404, "version_not_found")
+                ctx = getattr(self, "_auth_ctx", None)
+                audit_mod.record_event(
+                    actor_user_id=(ctx.username if ctx else "unknown") or "unknown",
+                    action=audit_mod.FRAMEWORK_VERSION_CLONE,
+                    entity_type="FrameworkVersion",
+                    entity_id=draft.id,
+                    new_value={"version": draft.version, "cloned_from": vid},
+                )
+                return self._send(
+                    200,
+                    json.dumps(to_jsonable(draft), ensure_ascii=False).encode("utf-8"),
+                    "application/json",
+                )
+            auth = self._gate(qs, permission=PERM_FRAMEWORK_PUBLISH)
+            if auth is None:
+                return
+            vid = (form.get("version_id") or qs.get("version_id") or [""])[0]
+            try:
+                pub = fw_versions.publish_version(vid)
+            except KeyError:
+                return self._deny(404, "version_not_found")
+            ctx = getattr(self, "_auth_ctx", None)
+            audit_mod.record_event(
+                actor_user_id=(ctx.username if ctx else "unknown") or "unknown",
+                action=audit_mod.FRAMEWORK_VERSION_PUBLISHED,
+                entity_type="FrameworkVersion",
+                entity_id=pub.id,
+                new_value={"version": pub.version, "status": pub.status},
+            )
+            return self._send(
+                200,
+                json.dumps(to_jsonable(pub), ensure_ascii=False).encode("utf-8"),
+                "application/json",
+            )
+
         # Authoring form posts
         if path.startswith(
             (
@@ -1956,85 +2122,64 @@ class Handler(BaseHTTPRequestHandler):
                 "/mappings/",
                 "/clients/",
                 "/programs/",
-                "/evidence/",
                 "/tasks/",
             )
         ):
             length = int(self.headers.get("Content-Length") or "0")
             raw = self.rfile.read(max(0, min(length, 2_000_000))).decode("utf-8", "replace")
-            if path in {"/evidence/new", "/tasks/new"}:
-                auth = self._gate(qs)
+            if path in {"/tasks/new", "/tasks/edit"}:
+                program = _resolve_program(qs)
+                if program is None:
+                    return self._deny(404, "program_not_found")
+                auth = self._gate(
+                    qs, target_tenant_id=program.tenant_id, permission=PERM_TASK_WRITE
+                )
                 if auth is None:
                     return
                 form = parse_qs(raw, keep_blank_values=True)
-                title = (form.get("title") or [""])[0].strip()
-                program = _resolve_program(qs)
-                if program is None or not title:
-                    return self._deny(400, "program_and_title_required")
-                snap_path = program_authoring.find_program_path(
-                    program.program_id, _active_registry()
-                )
-                if snap_path is None:
-                    return self._deny(404, "program_snapshot_not_writable")
-                raw_json = json.loads(snap_path.read_text(encoding="utf-8"))
+                if not self._require_csrf(form):
+                    return
+                from engine import task_service
+
                 ctx = getattr(self, "_auth_ctx", None)
                 actor = (ctx.username if ctx else "unknown") or "unknown"
-                if path == "/evidence/new":
-                    eid = f"ev-{__import__('secrets').token_hex(4)}"
-                    raw_json.setdefault("evidences", []).append(
-                        {
-                            "id": eid,
-                            "title": title,
-                            "filename": title,
-                            "control_refs": [],
-                            "status": "REVIEW_REQUIRED",
-                            "valid_until": (form.get("due_date") or [None])[0] or None,
-                            "notes": (form.get("notes") or [""])[0],
-                        }
+                title = (form.get("title") or [""])[0].strip()
+                if not title and path != "/tasks/edit":
+                    return self._deny(400, "title_required")
+                try:
+                    task = task_service.upsert_task(
+                        program=program,
+                        registry_path=_active_registry(),
+                        title=title or "Attività",
+                        actor=actor,
+                        task_id=(form.get("task_id") or [""])[0] or None,
+                        control_ref=(form.get("control_ref") or [None])[0],
+                        owner=(form.get("owner") or [None])[0],
+                        due_date=(form.get("due_date") or [None])[0],
+                        priority=(form.get("priority") or ["MEDIUM"])[0],
+                        status=(form.get("status") or ["TODO"])[0],
+                        notes=(form.get("notes") or [""])[0],
+                        action=(form.get("action") or ["save"])[0],
                     )
-                    audit_mod.record_event(
-                        actor_user_id=actor,
-                        action=audit_mod.EVIDENCE_CREATED,
-                        entity_type="Evidence",
-                        entity_id=eid,
-                        tenant_id=program.tenant_id,
-                    )
-                    target = f"/evidence?{_nav_qs(qs, program_id=program.program_id)}"
-                else:
-                    tid = f"task-{__import__('secrets').token_hex(4)}"
-                    raw_json.setdefault("tasks", []).append(
-                        {
-                            "id": tid,
-                            "title": title,
-                            "control_ref": None,
-                            "owner": (form.get("owner") or [None])[0] or None,
-                            "status": "TODO",
-                            "due_date": (form.get("due_date") or [None])[0] or None,
-                            "priority": "MEDIUM",
-                            "notes": (form.get("notes") or [""])[0],
-                        }
-                    )
-                    audit_mod.record_event(
-                        actor_user_id=actor,
-                        action=audit_mod.TASK_CREATED,
-                        entity_type="Task",
-                        entity_id=tid,
-                        tenant_id=program.tenant_id,
-                    )
-                    target = f"/tasks?{_nav_qs(qs, program_id=program.program_id)}"
-                snap_path.write_text(
-                    json.dumps(raw_json, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8",
+                except (FileNotFoundError, KeyError) as exc:
+                    return self._deny(404, str(exc))
+                audit_mod.record_event(
+                    actor_user_id=actor,
+                    action=audit_mod.TASK_UPDATED
+                    if path.endswith("/edit")
+                    else audit_mod.TASK_CREATED,
+                    entity_type="Task",
+                    entity_id=task.id,
+                    tenant_id=program.tenant_id,
                 )
-                return self._redirect(target)
+                return self._redirect(
+                    f"/tasks?{_nav_qs(qs, program_id=program.program_id)}"
+                )
             if authoring_routes.handle_authoring_post(self, path, qs, raw):
                 return
 
         # Control optimistic lock + N/A rationale
         if path == "/api/control/update":
-            auth = self._gate(qs)
-            if auth is None:
-                return
             length = int(self.headers.get("Content-Length") or "0")
             raw = self.rfile.read(max(0, min(length, 256_000))).decode("utf-8", "replace")
             ctype = (self.headers.get("Content-Type") or "").lower()
@@ -2044,15 +2189,28 @@ class Handler(BaseHTTPRequestHandler):
                     payload = json.loads(raw) if raw.strip() else {}
                 except json.JSONDecodeError:
                     return self._deny(400, "invalid_json")
+                form_csrf = {
+                    CSRF_FORM_FIELD: [str(payload.get("csrf_token") or "")],
+                }
             else:
                 form = parse_qs(raw, keep_blank_values=True)
                 payload = {k: (v[0] if v else "") for k, v in form.items()}
+                form_csrf = form
+            if not self._require_csrf(form_csrf):
+                return
             from engine.control_locking import ConflictError, ControlPatch, apply_patch
             from engine.domain import ImplementationStatus
 
             program = _resolve_program(qs)
             if program is None:
                 return self._deny(404, "program_not_found")
+            auth = self._gate(
+                qs,
+                target_tenant_id=program.tenant_id,
+                permission=PERM_CONTROL_WRITE,
+            )
+            if auth is None:
+                return
             actor_tenants, is_super = auth
             decision = assert_tenant_access(
                 actor_tenant_ids=actor_tenants,
@@ -2133,8 +2291,26 @@ class Handler(BaseHTTPRequestHandler):
             )
             return self._send(503, html.encode("utf-8"), "text/html; charset=utf-8")
 
+        client_ip = self.client_address[0] if self.client_address else "unknown"
+        throttle = check_login_allowed(client_ip, username)
+        if not throttle.allowed:
+            audit_mod.record_event(
+                actor_user_id=username or "anonymous",
+                action=audit_mod.LOGIN,
+                entity_type="Session",
+                entity_id="rate_limited",
+                detail="rate_limited",
+            )
+            html = login_page_html(
+                lang=lang or "it",
+                error=f"Troppi tentativi. Riprova tra {throttle.retry_after_sec}s.",
+                next_path=next_path,
+            )
+            return self._send(429, html.encode("utf-8"), "text/html; charset=utf-8")
+
         result = authenticate(username, password)
         if not result.ok or result.user is None:
+            record_login_failure(client_ip, username)
             audit_mod.record_event(
                 actor_user_id=username or "anonymous",
                 action=audit_mod.LOGIN,
@@ -2162,6 +2338,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(401, html.encode("utf-8"), "text/html; charset=utf-8")
             mfa_ok = verify_totp(user.mfa_secret or "", mfa_code)
             if not mfa_ok:
+                record_login_failure(client_ip, username)
                 html = login_page_html(
                     lang=lang or "it",
                     error="Codice MFA non valido.",
@@ -2170,9 +2347,35 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 return self._send(401, html.encode("utf-8"), "text/html; charset=utf-8")
         elif mfa_required_for_role(user.role) and not user.temporary_review:
-            # Hook ready: enrollment recommended before real client data
-            mfa_ok = True
+            # Privileged roles without MFA enrolled cannot receive production session
+            enforce_mfa = os.environ.get("WAYFOLD_MFA_ENFORCE", "1").strip().lower() not in {
+                "0",
+                "false",
+                "no",
+                "off",
+            }
+            test_mode = os.environ.get("WAYFOLD_TEST_MODE", "").strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
+            if enforce_mfa and not test_mode and not (user.mfa_enabled and user.mfa_secret):
+                audit_mod.record_event(
+                    actor_user_id=user.username,
+                    action=audit_mod.LOGIN,
+                    entity_type="Session",
+                    entity_id="mfa_required",
+                    detail="mfa_enrollment_required",
+                )
+                html = login_page_html(
+                    lang=lang or "it",
+                    error="MFA obbligatoria: completa l'enrollment prima di accedere.",
+                    next_path=next_path,
+                )
+                return self._send(403, html.encode("utf-8"), "text/html; charset=utf-8")
 
+        record_login_success(client_ip, username)
         tenants = sorted(effective_tenant_ids(user))
         token = issue_session(
             user.username,
@@ -2181,6 +2384,7 @@ class Handler(BaseHTTPRequestHandler):
             is_superuser=role_is_superuser(user.role_enum),
             mfa_verified=mfa_ok,
         )
+        csrf = issue_csrf_token()
         audit_mod.record_event(
             actor_user_id=user.username,
             action=audit_mod.LOGIN,
@@ -2192,14 +2396,21 @@ class Handler(BaseHTTPRequestHandler):
                 else f"role={user.role}"
             ),
         )
-        return self._redirect(
-            next_path,
-            extra_headers={
-                "Set-Cookie": session_cookie_header(
-                    token, secure=self._request_is_secure()
-                )
-            },
+        # Multiple Set-Cookie via separate headers
+        self.send_response(302)
+        self.send_header("Location", next_path)
+        self.send_header(
+            "Set-Cookie",
+            session_cookie_header(token, secure=self._request_is_secure()),
         )
+        self.send_header(
+            "Set-Cookie",
+            csrf_cookie_header(csrf, secure=self._request_is_secure()),
+        )
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        return
 
     def log_message(self, fmt, *args):  # noqa: A003
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
@@ -2212,6 +2423,7 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8092)
     args = parser.parse_args(argv)
+    assert_session_secret_configured()
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"WayFold Compliance listening on http://{args.host}:{args.port}")
     httpd.serve_forever()

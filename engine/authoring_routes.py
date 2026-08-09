@@ -16,11 +16,16 @@ from engine import program_authoring
 from engine.domain import CoverageRelation, MappingRecord, ReviewStatus
 from engine.portfolio import DEFAULT_REGISTRY, build_portfolio, load_portfolio_programs
 from engine.program_loader import load_program_snapshot
+from engine import clients_store
+from engine.authz import assert_tenant_access
 from engine.rbac import (
+    PERM_CLIENT_CREATE,
+    PERM_CONTROL_WRITE,
     PERM_FRAMEWORK_PUBLISH,
     PERM_KB_READ,
     PERM_KB_WRITE,
     PERM_MAPPING_WRITE,
+    PERM_PROGRAM_CREATE,
 )
 from engine.i18n import lang_from_qs
 from engine.runtime_paths import portfolio_registry_path
@@ -329,13 +334,13 @@ def handle_authoring_get(handler, path: str, qs: dict, auth) -> bool:
         return True
 
     if path == "/clients/new":
-        if handler._gate(qs) is None:
+        if handler._gate(qs, permission=PERM_CLIENT_CREATE) is None:
             return True
         handler._send(200, authoring_pages.client_create_page(nav).encode("utf-8"), "text/html; charset=utf-8")
         return True
 
     if path == "/programs/new":
-        if handler._gate(qs) is None:
+        if handler._gate(qs, permission=PERM_PROGRAM_CREATE) is None:
             return True
         rows = build_portfolio(
             actor_tenant_ids=actor_tenants,
@@ -349,14 +354,19 @@ def handle_authoring_get(handler, path: str, qs: dict, auth) -> bool:
                 continue
             seen.add(r.tenant_id)
             clients.append({"tenant_id": r.tenant_id, "tenant_name": r.tenant_name})
-        # Also allow brand-new tenants from pending client create via query
-        if qs.get("tenant_id", [""])[0] and qs.get("tenant_name", [""])[0]:
-            clients.append(
-                {
-                    "tenant_id": qs.get("tenant_id", [""])[0],
-                    "tenant_name": qs.get("tenant_name", [""])[0],
-                }
-            )
+        for c in clients_store.list_clients():
+            if c.tenant_id in seen:
+                continue
+            if not is_super:
+                decision = assert_tenant_access(
+                    actor_tenant_ids=actor_tenants,
+                    is_superuser=is_super,
+                    target_tenant_id=c.tenant_id,
+                )
+                if not decision.allowed:
+                    continue
+            seen.add(c.tenant_id)
+            clients.append({"tenant_id": c.tenant_id, "tenant_name": c.tenant_name})
         seed_kb([p for p, _ in load_portfolio_programs(_registry())])
         published = [v for v in fw_versions.list_versions() if v.status == "PUBLISHED"]
         handler._send(
@@ -372,14 +382,21 @@ def handle_authoring_get(handler, path: str, qs: dict, auth) -> bool:
         return True
 
     if path == "/control/edit":
-        if handler._gate(qs) is None:
-            return True
         from engine.consultant_views import control_detail
         from engine.control_locking import get_version
 
         program = _resolve_program(qs)
         if program is None:
             handler._deny(404, "program_not_found")
+            return True
+        if (
+            handler._gate(
+                qs,
+                target_tenant_id=program.tenant_id,
+                permission=PERM_CONTROL_WRITE,
+            )
+            is None
+        ):
             return True
         ref = qs.get("control_ref", [""])[0]
         detail = control_detail(program, ref)
@@ -716,16 +733,24 @@ def handle_authoring_post(handler, path: str, qs: dict, raw: str) -> bool:
         return True
 
     if path == "/clients/new":
-        if handler._gate(qs) is None:
+        if handler._gate(qs, permission=PERM_CLIENT_CREATE) is None:
             return True
         try:
-            client = program_authoring.create_client_shell(
+            rec = clients_store.create_client(
                 name=_one(form, "name"),
                 code=_one(form, "code"),
                 description=_one(form, "description"),
                 contact=_one(form, "contact"),
                 status=_one(form, "status", "ACTIVE"),
             )
+            client = {
+                "tenant_id": rec.tenant_id,
+                "tenant_name": rec.tenant_name,
+                "code": rec.code,
+                "description": rec.description,
+                "contact": rec.contact,
+                "status": rec.status,
+            }
         except ValueError as exc:
             handler._send(
                 400,
@@ -741,24 +766,19 @@ def handle_authoring_post(handler, path: str, qs: dict, raw: str) -> bool:
             tenant_id=client["tenant_id"],
             new_value={"name": client["tenant_name"]},
         )
-        # Persist pending client marker
-        from pathlib import Path
-        import json
-        from engine.runtime_paths import data_root
+        # CONSULTANT who creates a client is assigned to it (tenant-scoped)
+        ctx = getattr(handler, "_auth_ctx", None)
+        if ctx and getattr(ctx, "role", None):
+            from engine.rbac import Role, parse_role
+            from engine.users import assign_consultant, get_user, load_assignments
 
-        pending = data_root() / "pending_clients.json"
-        rows = []
-        if pending.is_file():
-            try:
-                rows = json.loads(pending.read_text(encoding="utf-8")).get("clients") or []
-            except (OSError, json.JSONDecodeError):
-                rows = []
-        rows = [r for r in rows if r.get("tenant_id") != client["tenant_id"]]
-        rows.append(client)
-        pending.write_text(
-            json.dumps({"clients": rows}, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+            role = ctx.role if isinstance(ctx.role, Role) else parse_role(str(ctx.role))
+            if role == Role.CONSULTANT and ctx.username:
+                existing = load_assignments().get(ctx.username.lower(), [])
+                if client["tenant_id"] not in existing:
+                    assign_consultant(ctx.username, list(existing) + [client["tenant_id"]])
+                # Keep session tenant set usable for immediate program create via QS refresh
+                _ = get_user(ctx.username)
         q = urlencode(
             {
                 **dict(__import__("urllib.parse", fromlist=["parse_qsl"]).parse_qsl(nav)),
@@ -770,31 +790,35 @@ def handle_authoring_post(handler, path: str, qs: dict, raw: str) -> bool:
         return True
 
     if path == "/programs/new":
-        if handler._gate(qs) is None:
+        auth = handler._gate(qs, permission=PERM_PROGRAM_CREATE)
+        if auth is None:
             return True
+        actor_tenants, is_super = auth
         action = _one(form, "action", "create")
         version_ids = form.get("version_ids") or []
         tenant_id = _one(form, "tenant_id")
+        if not tenant_id:
+            handler._deny(400, "tenant_required")
+            return True
+        # CONSULTANT may only create programs on assigned tenants
+        decision = assert_tenant_access(
+            actor_tenant_ids=actor_tenants,
+            is_superuser=is_super,
+            target_tenant_id=tenant_id,
+        )
+        if not decision.allowed:
+            handler._deny(403, decision.reason)
+            return True
         tenant_name = qs.get("tenant_name", [""])[0]
-        # resolve tenant name from portfolio or pending
         if not tenant_name:
             for p, _ in load_portfolio_programs(_registry()):
                 if p.tenant_id == tenant_id:
                     tenant_name = p.tenant_name
                     break
         if not tenant_name:
-            import json
-            from engine.runtime_paths import data_root
-
-            pending = data_root() / "pending_clients.json"
-            if pending.is_file():
-                try:
-                    for c in json.loads(pending.read_text(encoding="utf-8")).get("clients") or []:
-                        if c.get("tenant_id") == tenant_id:
-                            tenant_name = c.get("tenant_name") or tenant_id
-                            break
-                except (OSError, json.JSONDecodeError):
-                    pass
+            c = clients_store.get_client(tenant_id)
+            if c:
+                tenant_name = c.tenant_name
         tenant_name = tenant_name or tenant_id
         if action == "preview":
             try:
@@ -804,13 +828,25 @@ def handle_authoring_post(handler, path: str, qs: dict, raw: str) -> bool:
                 err = str(exc)
             else:
                 err = ""
+            # Use real AuthContext — never superuser bypass for client visibility
             rows = build_portfolio(
-                actor_tenant_ids=set(),
-                is_superuser=True,
+                actor_tenant_ids=actor_tenants,
+                is_superuser=is_super,
                 registry_path=_registry(),
             )
             clients = [{"tenant_id": r.tenant_id, "tenant_name": r.tenant_name} for r in rows]
-            clients.append({"tenant_id": tenant_id, "tenant_name": tenant_name})
+            for c in clients_store.list_clients():
+                if any(x["tenant_id"] == c.tenant_id for x in clients):
+                    continue
+                d = assert_tenant_access(
+                    actor_tenant_ids=actor_tenants,
+                    is_superuser=is_super,
+                    target_tenant_id=c.tenant_id,
+                )
+                if d.allowed:
+                    clients.append(
+                        {"tenant_id": c.tenant_id, "tenant_name": c.tenant_name}
+                    )
             published = [v for v in fw_versions.list_versions() if v.status == "PUBLISHED"]
             handler._send(
                 200,

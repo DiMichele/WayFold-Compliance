@@ -41,9 +41,16 @@ ALLOWED_CONTENT_TYPES = frozenset(
         "application/json",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/octet-stream",
     }
 )
+
+# Magic byte signatures (extension → prefixes)
+_MAGIC: dict[str, tuple[bytes, ...]] = {
+    ".pdf": (b"%PDF",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+}
 
 
 class EvidenceSensitivity:
@@ -128,21 +135,51 @@ def validate_upload(
     ext = Path(safe).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         return "extension_not_allowed"
-    ctype = (content_type or "application/octet-stream").split(";")[0].strip().lower()
+    ctype = (content_type or "").split(";")[0].strip().lower()
+    if not ctype or ctype == "application/octet-stream":
+        # octet-stream alone is never sufficient validation
+        ctype = _guess_content_type(ext)
     if ctype not in ALLOWED_CONTENT_TYPES:
         return "content_type_not_allowed"
     if ".." in safe or safe.startswith("/") or "\\" in safe:
         return "path_traversal"
-    # scan hook (no-op placeholder for AV)
+    magic_err = _validate_magic(ext, content)
+    if magic_err:
+        return magic_err
+    # Malware scan hook — NOT IMPLEMENTED (must not report PASS)
     scan_result = scan_content(content, filename=safe)
-    if scan_result:
+    if scan_result and scan_result != "NOT_IMPLEMENTED":
         return scan_result
     return None
 
 
-def scan_content(content: bytes, *, filename: str) -> str | None:  # noqa: ARG001
-    """Antivirus/scan hook — currently no-op (PASS)."""
+def _guess_content_type(ext: str) -> str:
+    return {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".txt": "text/plain",
+        ".md": "text/markdown",
+        ".csv": "text/csv",
+        ".json": "application/json",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }.get(ext, "")
+
+
+def _validate_magic(ext: str, content: bytes) -> str | None:
+    prefixes = _MAGIC.get(ext)
+    if not prefixes:
+        return None
+    if not any(content.startswith(p) for p in prefixes):
+        return "file_signature_mismatch"
     return None
+
+
+def scan_content(content: bytes, *, filename: str) -> str | None:  # noqa: ARG001
+    """Antivirus/scan hook — NOT IMPLEMENTED (do not claim PASS)."""
+    return "NOT_IMPLEMENTED"
 
 
 def _load_catalog() -> dict[str, Any]:
@@ -313,20 +350,34 @@ def seed_demo_evidence_files(program) -> list[StoredEvidence]:
     """Materialize binary placeholders for program evidence snapshots."""
     created: list[StoredEvidence] = []
     for ev in getattr(program, "evidences", []) or []:
-        body = (
-            f"WayFold Compliance evidence placeholder\n"
-            f"id={ev.id}\n"
-            f"title={ev.title}\n"
-            f"program={program.program_id}\n"
-            f"marker={getattr(program, 'dataset_marker', '')}\n"
-        ).encode("utf-8")
+        raw_name = ev.filename or f"{ev.id}.txt"
+        ext = Path(raw_name).suffix.lower()
+        if ext == ".pdf":
+            # Minimal valid PDF signature for magic validation
+            body = (
+                b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+                b"1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"
+                + f"% id={ev.id} title={ev.title}\n".encode("utf-8")
+            )
+            ctype = "application/pdf"
+            fname = raw_name
+        else:
+            body = (
+                f"WayFold Compliance evidence placeholder\n"
+                f"id={ev.id}\n"
+                f"title={ev.title}\n"
+                f"program={program.program_id}\n"
+                f"marker={getattr(program, 'dataset_marker', '')}\n"
+            ).encode("utf-8")
+            ctype = "text/plain"
+            fname = raw_name if ext in ALLOWED_EXTENSIONS else f"{ev.id}.txt"
         item = store_evidence(
             tenant_id=program.tenant_id,
             program_id=program.program_id,
             title=ev.title,
-            filename=ev.filename or f"{ev.id}.txt",
+            filename=fname,
             content=body,
-            content_type="text/plain",
+            content_type=ctype,
             control_refs=list(ev.control_refs or []),
             status=getattr(ev, "status", EvidenceLifecycle.VALID) or EvidenceLifecycle.VALID,
             sensitivity=EvidenceSensitivity.CONFIDENTIAL,

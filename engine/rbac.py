@@ -33,6 +33,8 @@ PERM_SETTINGS_WRITE = "settings.write"
 PERM_AI_TOGGLE = "ai.toggle"
 PERM_FRAMEWORK_PUBLISH = "framework.publish"
 PERM_USER_ADMIN = "user.admin"
+PERM_CLIENT_CREATE = "client.create"
+PERM_PROGRAM_CREATE = "program.create"
 
 
 _ROLE_PERMS: dict[Role, frozenset[str]] = {
@@ -53,6 +55,8 @@ _ROLE_PERMS: dict[Role, frozenset[str]] = {
             PERM_AI_TOGGLE,
             PERM_FRAMEWORK_PUBLISH,
             PERM_USER_ADMIN,
+            PERM_CLIENT_CREATE,
+            PERM_PROGRAM_CREATE,
         }
     ),
     Role.CONSULTANT: frozenset(
@@ -70,6 +74,8 @@ _ROLE_PERMS: dict[Role, frozenset[str]] = {
             PERM_AUDIT_READ,
             PERM_AI_TOGGLE,
             PERM_FRAMEWORK_PUBLISH,
+            PERM_CLIENT_CREATE,
+            PERM_PROGRAM_CREATE,
         }
     ),
     Role.CLIENT_ADMIN: frozenset(

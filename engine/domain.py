@@ -9,6 +9,8 @@ class CoverageRelation(str, Enum):
     FULL = "FULL"
     PARTIAL = "PARTIAL"
     SUPPORTING = "SUPPORTING"
+    # Core AppliedControl link without approved WayFold mapping — never treat as FULL
+    NEEDS_REVIEW = "NEEDS_REVIEW"
 
 
 class ImplementationStatus(str, Enum):
@@ -102,7 +104,7 @@ class EvidenceSnapshot:
 
 @dataclass(frozen=True)
 class RemediationTaskSnapshot:
-    """Remediation / task row for consultant UX (demo overlay)."""
+    """Remediation / task row for consultant UX (demo overlay → TaskNode)."""
 
     id: str
     title: str
@@ -112,11 +114,21 @@ class RemediationTaskSnapshot:
     due_date: str | None = None
     priority: str | None = None
     notes: str = ""
+    requirement_id: str | None = None
+    gap_taxonomy: str | None = None
+    created_by: str | None = None
+    updated_at: str | None = None
+    tenant_id: str | None = None
+    program_id: str | None = None
 
 
 @dataclass(frozen=True)
 class ProgramSnapshot:
-    """Pinned client program baseline (Folder + Perimeter + assessments)."""
+    """Pinned client program baseline (Folder + Perimeter + assessments).
+
+    Interim mutable store / DTO. Target: read model over CISO Perimeter +
+    ComplianceAssessment — not a second GRC core.
+    """
 
     tenant_id: str
     tenant_name: str
@@ -133,6 +145,8 @@ class ProgramSnapshot:
     evidences: list[EvidenceSnapshot] = field(default_factory=list)
     tasks: list[RemediationTaskSnapshot] = field(default_factory=list)
     available_framework_versions: list[dict[str, Any]] = field(default_factory=list)
+    owner: str = ""
+    description: str = ""
 
 
 @dataclass

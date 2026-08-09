@@ -116,14 +116,26 @@ services:
     command: ["python", "-m", "engine.api", "--host", "0.0.0.0", "--port", "8092"]
     env_file:
       - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/engine/.auth.env
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/engine/.build.env
     environment:
       - PYTHONUNBUFFERED=1
+      - WAYFOLD_ENV=production
       # Hardening: public workspace requires login session
       - WAYFOLD_OPEN_ACCESS=0
       - WAYFOLD_ALLOW_QS_AUTH=0
+      - WAYFOLD_MFA_ENFORCE=1
+      # Advanced features OFF server-side until re-enable phase
+      - WAYFOLD_FEATURE_AI=0
+      - WAYFOLD_FEATURE_FW_SUGGESTIONS=0
+      - WAYFOLD_FEATURE_CONNECTORS=0
+      - WAYFOLD_FEATURE_AUTO_EVIDENCE=0
       # No demo fixtures / seed data in production
       - WAYFOLD_SEED_DEMO=0
       - WAYFOLD_DATA_DIR=/var/lib/wayfold-compliance
+      - WAYFOLD_BUILD_SHA=${WAYFOLD_BUILD_SHA:-unknown}
+      - WAYFOLD_BUILT_AT=${WAYFOLD_BUILT_AT:-}
+      - WAYFOLD_APP_VERSION=${WAYFOLD_APP_VERSION:-0.1.0}
+      - WAYFOLD_SCHEMA_VERSION=1
     volumes:
       - ${WAYFOLD_COMPLIANCE_ROOT:-.}:/app:ro
       - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/engine:/var/lib/wayfold-compliance

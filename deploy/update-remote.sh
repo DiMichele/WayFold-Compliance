@@ -38,6 +38,28 @@ fi
 # Compose requires env_file to exist
 touch "$AUTH_ENV"
 chmod 600 "$AUTH_ENV" 2>/dev/null || true
+BUILD_ENV="$APP_DIR/data/engine/.build.env"
+if [[ ! -f "$BUILD_ENV" ]]; then
+  umask 077
+  cat >"$BUILD_ENV" <<EOF
+WAYFOLD_BUILD_SHA=${WAYFOLD_BUILD_SHA:-unknown}
+WAYFOLD_BUILT_AT=${WAYFOLD_BUILT_AT:-}
+WAYFOLD_APP_VERSION=0.1.0
+WAYFOLD_SCHEMA_VERSION=1
+EOF
+fi
+chmod 600 "$BUILD_ENV" 2>/dev/null || true
+# Prefer env exported by deploy script
+if [[ -n "${WAYFOLD_BUILD_SHA:-}" ]]; then
+  umask 077
+  cat >"$BUILD_ENV" <<EOF
+WAYFOLD_BUILD_SHA=$WAYFOLD_BUILD_SHA
+WAYFOLD_BUILT_AT=${WAYFOLD_BUILT_AT:-}
+WAYFOLD_APP_VERSION=${WAYFOLD_APP_VERSION:-0.1.0}
+WAYFOLD_SCHEMA_VERSION=1
+EOF
+  chmod 600 "$BUILD_ENV"
+fi
 
 # One-shot clean slate: touch data/.wipe_db before deploy to reset GRC + engine stores
 if [[ -f data/.wipe_db ]]; then
@@ -55,14 +77,27 @@ if [[ -f data/.wipe_db ]]; then
   rm -f data/.wipe_db
 fi
 
-# GRC core images expect uid 1001 for db volume (no passwordless sudo on VPS:
-# use a one-shot root container to chown the bind mount).
+# Ownership for container UIDs — NEVER world-writable (no a+rwx / a+rwX).
+# GRC core: uid 1001; engine: match compose user (often 1000/1001).
+ENGINE_UID="${WAYFOLD_ENGINE_UID:-1000}"
+ENGINE_GID="${WAYFOLD_ENGINE_GID:-1000}"
 if ! docker run --rm -v "$APP_DIR/data/db:/code/db" alpine:3.20 \
-  sh -c 'chown -R 1001:1001 /code/db && chmod -R u+rwX,g+rwX /code/db'; then
-  echo "WARN: docker chown failed; trying chmod a+rwx on data/db" >&2
-  chmod -R a+rwx data/db || true
+  sh -c 'chown -R 1001:1001 /code/db && chmod -R u+rwX,g+rwX,o-rwx /code/db'; then
+  echo "ERROR: docker chown failed for data/db — refusing world-writable fallback" >&2
+  exit 1
 fi
-chmod -R a+rwX data/engine 2>/dev/null || true
+if ! docker run --rm -v "$APP_DIR/data/engine:/data/engine" alpine:3.20 \
+  sh -c "chown -R ${ENGINE_UID}:${ENGINE_GID} /data/engine && chmod -R u+rwX,g+rwX,o-rwx /data/engine && find /data/engine -type f -name '.auth.env' -exec chmod 600 {} \; && find /data/engine -type d -exec chmod 750 {} \;"; then
+  echo "ERROR: docker chown failed for data/engine — refusing world-writable fallback" >&2
+  exit 1
+fi
+chmod 600 "$AUTH_ENV" 2>/dev/null || true
+# Verify no world-writable engine/db paths
+if find data/engine data/db -perm -0002 2>/dev/null | grep -q .; then
+  echo "ERROR: world-writable paths under data/ — abort deploy" >&2
+  find data/engine data/db -perm -0002 2>/dev/null | head -20 >&2 || true
+  exit 1
+fi
 
 echo "==> Pull + up Compliance stack"
 # Tear down previous project names (compose file dir was used as project name before)

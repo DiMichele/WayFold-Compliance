@@ -98,6 +98,15 @@ def get_mapping(mapping_id: str) -> tuple[str, MappingRecord] | None:
     return None
 
 
+def _assert_version_editable(framework_id: str, framework_version: str) -> None:
+    """Published FrameworkVersion mappings are read-only at store level."""
+    from engine.framework_versions import VersionStatus, list_versions
+
+    for ver in list_versions(framework_id=framework_id):
+        if str(ver.version) == str(framework_version) and ver.status == VersionStatus.PUBLISHED.value:
+            raise PermissionError("published_mapping_immutable")
+
+
 def upsert_mapping(
     record: MappingRecord,
     *,
@@ -105,6 +114,7 @@ def upsert_mapping(
 ) -> tuple[str, MappingRecord]:
     if record.relation == CoverageRelation.PARTIAL and not (record.uncovered_delta or "").strip():
         raise ValueError("partial_requires_delta")
+    _assert_version_editable(record.framework_id, record.framework_version)
     data = _load()
     rows = list(data.get("mappings") or [])
     payload = {

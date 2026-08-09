@@ -1,5 +1,0 @@
-logs/
-orchestrator.lock
-*.tmp
-*.lock.tmp
-.write-probe

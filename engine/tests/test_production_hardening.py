@@ -89,6 +89,8 @@ class ProductionHardeningTests(unittest.TestCase):
             "WAYFOLD_SESSION_SECRET": "hardening-secret",
             "WAYFOLD_AUTH_USER": "admin",
             "WAYFOLD_AUTH_PASSWORD": "admin",
+            "WAYFOLD_CSRF_DISABLE": "1",
+            "WAYFOLD_TEST_MODE": "1",
         }
         self._cm = mock.patch.dict(os.environ, self.env, clear=False)
         self._cm.start()
@@ -320,7 +322,8 @@ class ProductionHardeningTests(unittest.TestCase):
         h = FakeHandler("/api/control/update", cookie=cookie, body=payload)
         h.headers["Content-Length"] = str(len(payload))
         h.do_POST()
-        self.assertIn(h.status, {404, 400})
+        # 404 program missing, 400 N/A rationale, or 403 if permission gate fires first
+        self.assertIn(h.status, {404, 400, 403})
 
     def test_ssrf_blocks_private(self):
         self.assertIsNotNone(validate_url("http://127.0.0.1/x", allow_file=False))
@@ -328,7 +331,21 @@ class ProductionHardeningTests(unittest.TestCase):
         self.assertIsNotNone(validate_url("http://169.254.169.254/latest", allow_file=False))
         self.assertIsNotNone(validate_url("gopher://evil", allow_file=False))
         self.assertIsNotNone(validate_url("file:///etc/passwd", allow_file=False))
-        self.assertIsNone(validate_url("fixture://demo-nis2/v1.html"))
+        # Production: fixture:// denied unless TEST MODE
+        import os
+
+        prev = os.environ.pop("WAYFOLD_TEST_MODE", None)
+        try:
+            self.assertEqual(
+                validate_url("fixture://demo-nis2/v1.html"), "fixture_scheme_disabled"
+            )
+            os.environ["WAYFOLD_TEST_MODE"] = "1"
+            self.assertIsNone(validate_url("fixture://demo-nis2/v1.html"))
+        finally:
+            if prev is None:
+                os.environ.pop("WAYFOLD_TEST_MODE", None)
+            else:
+                os.environ["WAYFOLD_TEST_MODE"] = prev
 
     def test_mfa_totp_roundtrip(self):
         secret = generate_totp_secret()

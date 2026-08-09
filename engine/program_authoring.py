@@ -186,6 +186,8 @@ def create_program(
             framework_version=ver.version,
         )
         for m in kb_maps:
+            if m.review_status != ReviewStatus.APPROVED:
+                continue
             mappings.append(m)
             ref = m.canonical_control_ref
             if ref and ref not in impl_by_ref:
@@ -238,14 +240,13 @@ def create_program(
         evidences=[],
         tasks=[],
         available_framework_versions=available,
+        owner=owner.strip(),
+        description=description.strip(),
     )
 
     # Persist under data/programs and register
     snap_path = programs_dir() / f"{program.program_id}.json"
-    # Enrich raw JSON with optional fields
     payload = _snapshot_to_dict(program)
-    payload["owner"] = owner.strip()
-    payload["description"] = description.strip()
     snap_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     if registry_path is not None:
@@ -260,21 +261,72 @@ def create_program(
 
 
 def checklist_preview(version_ids: list[str]) -> dict[str, Any]:
-    """Preview unified checklist without persisting a program."""
-    program = create_program(
-        name="__preview__",
+    """Pure in-memory checklist preview — no disk write/delete."""
+    version_ids = version_ids or []
+    versions = []
+    for vid in version_ids:
+        ver = get_version(vid)
+        if ver is None:
+            raise KeyError(f"version_not_found:{vid}")
+        if ver.status != VersionStatus.PUBLISHED.value:
+            raise ValueError(f"version_not_published:{ver.version}")
+        versions.append(ver)
+
+    requirements: list[RequirementSnapshot] = []
+    mappings: list[MappingRecord] = []
+    impl_by_ref: dict[str, ControlImplementationSnapshot] = {}
+    links: dict[str, list[str]] = {}
+
+    for ver in versions:
+        for req in ver.requirements:
+            is_leaf = getattr(req, "is_leaf", True)
+            requirements.append(
+                RequirementSnapshot(
+                    id=req.id,
+                    framework_id=ver.framework_id,
+                    framework_name=ver.framework_name,
+                    framework_version=ver.version,
+                    code=req.code,
+                    title=req.title,
+                    assessable=bool(is_leaf),
+                    is_leaf=bool(is_leaf),
+                )
+            )
+        for m in kb_mappings.list_mappings(
+            framework_id=ver.framework_id,
+            framework_version=ver.version,
+        ):
+            if m.review_status != ReviewStatus.APPROVED:
+                continue
+            mappings.append(m)
+            ref = m.canonical_control_ref
+            if ref and ref not in impl_by_ref:
+                catalog = get_by_code(ref)
+                impl_id = f"impl-{_slug(ref)}"
+                impl_by_ref[ref] = ControlImplementationSnapshot(
+                    id=impl_id,
+                    ref_id=ref,
+                    name=(catalog.title if catalog else ref),
+                    canonical_control_id=(catalog.id if catalog else ref),
+                    canonical_control_ref=ref,
+                    status=ImplementationStatus.NOT_IMPLEMENTED,
+                    priority=(catalog.default_priority if catalog else "MEDIUM"),
+                    description=(catalog.description if catalog else ""),
+                )
+            if ref and ref in impl_by_ref:
+                links.setdefault(m.requirement_id, []).append(impl_by_ref[ref].id)
+
+    program = ProgramSnapshot(
         tenant_id="tenant-preview",
         tenant_name="Preview",
-        version_ids=version_ids,
-        registry_path=None,
+        program_id="program-preview-memory",
+        program_name="__preview__",
+        requirements=requirements,
+        implementations=list(impl_by_ref.values()),
+        mappings=mappings,
+        requirement_implementation_links=links,
     )
-    # Do not leave preview on disk registry; remove file if preview
-    preview_path = programs_dir() / f"{program.program_id}.json"
     checklist = build_unified_checklist(program)
-    try:
-        preview_path.unlink(missing_ok=True)
-    except OSError:
-        pass
     return {
         "requirements": len(program.requirements),
         "unified_controls": len(checklist.controls),
@@ -336,6 +388,19 @@ def persist_control_changes(
             impls.append(impl)
     if not found:
         raise KeyError(control_id)
+    # Preserve program-level metadata (owner/description must survive control edits)
+    existing_owner = ""
+    existing_description = ""
+    try:
+        raw_existing = json.loads(program_path.read_text(encoding="utf-8"))
+        existing_owner = str(raw_existing.get("owner") or program.owner or "")
+        existing_description = str(
+            raw_existing.get("description") or program.description or ""
+        )
+    except (OSError, json.JSONDecodeError):
+        existing_owner = program.owner or ""
+        existing_description = program.description or ""
+
     updated = ProgramSnapshot(
         tenant_id=program.tenant_id,
         tenant_name=program.tenant_name,
@@ -351,6 +416,8 @@ def persist_control_changes(
         evidences=program.evidences,
         tasks=program.tasks,
         available_framework_versions=program.available_framework_versions,
+        owner=existing_owner,
+        description=existing_description,
     )
     save_program_snapshot(updated, program_path)
     return updated

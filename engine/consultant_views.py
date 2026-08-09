@@ -244,6 +244,43 @@ def evidence_view(
 ) -> list[EvidenceItem]:
     checklist = checklist or build_unified_checklist(program)
     items: list[EvidenceItem] = []
+    # Authoritative SoT: evidence_storage catalog (binary-backed)
+    from engine import evidence_storage
+
+    catalog = evidence_storage.list_evidence(
+        tenant_id=program.tenant_id, program_id=program.program_id
+    )
+    if catalog:
+        ctrl_meta = {
+            (c.canonical_control_ref or ""): c for c in checklist.controls
+        }
+        for ev in catalog:
+            refs = ev.control_refs or []
+            primary = refs[0] if refs else None
+            ctrl = ctrl_meta.get(primary or "")
+            frameworks: list[str] = []
+            for ref in refs:
+                c = ctrl_meta.get(ref)
+                if c:
+                    frameworks.extend(x.framework_name for x in c.framework_coverage)
+            items.append(
+                EvidenceItem(
+                    control_ref=", ".join(refs) if refs else None,
+                    name=ev.title,
+                    status=ev.status,
+                    owner=ctrl.owner if ctrl else None,
+                    evidence_count=1,
+                    missing=False,
+                    due_date=ev.valid_until,
+                    frameworks=sorted(set(frameworks)),
+                    evidence_id=ev.id,
+                    filename=ev.filename,
+                    valid_until=ev.valid_until,
+                    shared=len(refs) > 1,
+                    notes=ev.notes,
+                )
+            )
+        return items
     if program.evidences:
         ctrl_meta = {
             (c.canonical_control_ref or ""): c for c in checklist.controls

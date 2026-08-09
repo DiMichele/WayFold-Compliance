@@ -94,6 +94,12 @@ def load_program_snapshot(path: Path) -> ProgramSnapshot:
             due_date=t.get("due_date"),
             priority=t.get("priority"),
             notes=str(t.get("notes") or ""),
+            requirement_id=t.get("requirement_id"),
+            gap_taxonomy=t.get("gap_taxonomy"),
+            created_by=t.get("created_by"),
+            updated_at=t.get("updated_at"),
+            tenant_id=t.get("tenant_id") or raw.get("tenant_id"),
+            program_id=t.get("program_id") or raw.get("program_id"),
         )
         for t in raw.get("tasks") or []
     ]
@@ -112,4 +118,6 @@ def load_program_snapshot(path: Path) -> ProgramSnapshot:
         evidences=evidences,
         tasks=tasks,
         available_framework_versions=list(raw.get("available_framework_versions") or []),
+        owner=str(raw.get("owner") or ""),
+        description=str(raw.get("description") or ""),
     )

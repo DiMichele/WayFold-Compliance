@@ -1,38 +1,28 @@
 # WayFold Compliance
 
-Applicativo privato GRC multi-framework per consulenza cybersecurity.
+**WayFold Compliance** — GRC multi-framework per consulenza cybersecurity.
 
-| | |
-|---|---|
-| Live | https://compliance.wayfold.xyz/ |
-| Repository | https://github.com/DiMichele/WayFold-Compliance |
-| Product realignment report | [docs/review/PRODUCT-REALIGNMENT.md](docs/review/PRODUCT-REALIGNMENT.md) |
-| Review URL manifest | [docs/review/FINAL-REVIEW-URLS.md](docs/review/FINAL-REVIEW-URLS.md) |
-| Screenshots | [docs/review/realign/](docs/review/realign/) · [docs/review/final/](docs/review/final/) |
+- Produzione: https://compliance.wayfold.xyz
+- Progress: [`docs/PROGRESS.md`](docs/PROGRESS.md)
+- UI: [`docs/ui.md`](docs/ui.md)
+- Unified Compliance: [`docs/unified-compliance.md`](docs/unified-compliance.md)
+- Consultant UX: [`docs/consultant-ux.md`](docs/consultant-ux.md)
 
-## Stato
-
-**Product realignment COMPLETE** — Knowledge Base authoring end-to-end dalla UI  
-(CREATE → MAP → PUBLISH → ASSIGN → ASSESS)
-
-- READY FOR EXTERNAL REVIEW: **YES**
-- READY FOR REAL CLIENT DATA: **NO** (temporary review credential + MFA pending)
+Il brand del prodotto è **solo WayFold Compliance**. Il motore GRC sottostante è un dettaglio di implementazione (Strategy B): non compare in UI, titoli o messaggi rivolti all’utente.
 
 ## Layout
 
-```
+```text
 .
-  docs/         decisioni, architecture, review pack, acceptance
-  engine/       WayFold Compliance engine (UI + API + overlay stores)
-  deploy/       Docker / nginx / sync VPS
-  automation/   orchestratore fasi
-  prompts/      prompt Cursor storici fasi 1–6
+  docs/         stato, decisioni, architecture
+  engine/       prodotto WayFold Compliance (UI + servizi)
+  deploy/       produzione su compliance.wayfold.xyz
+  automation/   orchestratore fasi (overnight)
+  prompts/      prompt Cursor per fasi 1–6
 ```
 
-## Avvio locale
+## Deploy
 
-Vedi `docs/PROGRESS.md` e `docs/deployment.md`.
-
-## Deployed SHA (VPS sync)
-
-`dab74ce204fcbfffa6e58a6d4942f1f27c0e1feb`
+```powershell
+powershell -ExecutionPolicy Bypass -File apps/wayfold-compliance/deploy/deploy-compliance.ps1 -SetupTls
+```

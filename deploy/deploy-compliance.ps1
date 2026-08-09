@@ -62,6 +62,11 @@ if (-not $SkipSync) {
     $wipeLine = if ($WipeDb) { "touch data/.wipe_db" } else { "true" }
     if ($WipeDb) { Write-Host "-> WipeDb: reset GRC DB + engine stores on VPS" }
 
+    $buildSha = (git -C $AppRoot rev-parse HEAD 2>$null)
+    if (-not $buildSha) { $buildSha = "unknown" }
+    $builtAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    Write-Host "-> Build SHA: $buildSha"
+
     Invoke-RemoteBash @"
 set -euo pipefail
 cd $RemoteDir
@@ -70,6 +75,17 @@ rm -f wayfold-compliance-deploy.tgz
 chmod +x deploy/update-remote.sh deploy/setup-nginx-tls.sh 2>/dev/null || true
 sed -i 's/\r$//' deploy/update-remote.sh deploy/setup-nginx-tls.sh 2>/dev/null || true
 mkdir -p data
+export WAYFOLD_BUILD_SHA='$buildSha'
+export WAYFOLD_BUILT_AT='$builtAt'
+# Persist build metadata for compose interpolation
+umask 077
+cat > data/engine/.build.env <<EOF
+WAYFOLD_BUILD_SHA=$buildSha
+WAYFOLD_BUILT_AT=$builtAt
+WAYFOLD_APP_VERSION=0.1.0
+WAYFOLD_SCHEMA_VERSION=1
+EOF
+chmod 600 data/engine/.build.env 2>/dev/null || true
 $wipeLine
 bash deploy/update-remote.sh
 "@

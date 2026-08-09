@@ -70,9 +70,35 @@ def auth_configured() -> bool:
     return bool(user and password)
 
 
+def _is_production() -> bool:
+    env = os.environ.get("WAYFOLD_ENV", "").strip().lower()
+    if env in {"prod", "production"}:
+        return True
+    open_access = os.environ.get("WAYFOLD_OPEN_ACCESS", "").strip().lower()
+    if open_access in {"0", "false", "no"} and os.environ.get(
+        "WAYFOLD_AUTH_USER", ""
+    ).strip():
+        return True
+    return False
+
+
+def assert_session_secret_configured() -> None:
+    """Fail startup in production if SESSION_SECRET is missing."""
+    raw = os.environ.get("WAYFOLD_SESSION_SECRET", "").strip()
+    if not raw and _is_production():
+        raise RuntimeError(
+            "WAYFOLD_SESSION_SECRET missing — refusing to start in production"
+        )
+
+
 def _session_secret() -> bytes:
     raw = os.environ.get("WAYFOLD_SESSION_SECRET", "").strip()
     if not raw:
+        if _is_production():
+            raise RuntimeError(
+                "WAYFOLD_SESSION_SECRET missing — refusing to sign sessions in production"
+            )
+        # Dev/test only — never used when production markers are set
         raw = "wayfold-dev-session-secret-not-for-production"
     return raw.encode("utf-8")
 
@@ -121,6 +147,8 @@ def parse_session_token(token: str | None) -> Session | None:
     expected = hmac.new(_session_secret(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, sig):
         return None
+    from engine.session_revoke import is_token_revoked
+
     parts = payload.split("|")
     # Legacy: username|super|exp
     if len(parts) == 3:
@@ -131,6 +159,8 @@ def parse_session_token(token: str | None) -> Session | None:
             return None
         now = int(time.time())
         if exp < now or not username:
+            return None
+        if is_token_revoked(token, username=username, issued_at=now):
             return None
         return Session(
             username=username,
@@ -159,6 +189,8 @@ def parse_session_token(token: str | None) -> Session | None:
     if issued and now - issued > SESSION_ABSOLUTE_TTL_SEC:
         return None
     if last and now - last > SESSION_IDLE_TTL_SEC:
+        return None
+    if is_token_revoked(token, username=username, issued_at=issued):
         return None
     tenants = tuple(t for t in tenants_s.split(",") if t)
     return Session(

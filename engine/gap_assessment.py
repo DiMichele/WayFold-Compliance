@@ -1,3 +1,10 @@
+"""Gap / finding engine.
+
+Findings are emitted ONLY when a real problem exists.
+Never one row per coverage. Never leak PARTIAL delta across requirements
+that share a canonical control.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,7 +12,11 @@ from datetime import date
 
 from .checklist import build_unified_checklist
 from .dates import is_overdue, parse_date
-from .domain import ProgramSnapshot, UnifiedChecklist
+from .domain import (
+    ImplementationStatus,
+    ProgramSnapshot,
+    UnifiedChecklist,
+)
 
 
 class GapTaxonomy:
@@ -35,7 +46,7 @@ class GapRow:
     requirement_title: str
     canonical_control_ref: str | None
     control_name: str | None
-    mapping: str  # FULL|PARTIAL|SUPPORTING|UNMAPPED
+    mapping: str  # FULL|PARTIAL|SUPPORTING|UNMAPPED|NEEDS_REVIEW
     status: str
     owner: str | None
     deadline: str | None
@@ -57,9 +68,16 @@ class GapFilter:
     priority: str | None = None
     deadline_before: str | None = None
     deadline_after: str | None = None
-    mapped: bool | None = None  # True=mapped only, False=unmapped only
+    mapped: bool | None = None
     missing_evidence: bool | None = None
     search: str | None = None
+    taxonomy: str | None = None
+
+
+@dataclass
+class GapCounters:
+    requirements_with_problems: int
+    findings_total: int
 
 
 def build_gap_rows(
@@ -69,40 +87,117 @@ def build_gap_rows(
     req_title = {r.id: r.title for r in program.requirements}
     rows: list[GapRow] = []
 
+    # Index open/overdue tasks by control_ref for REMEDIATION findings
+    open_tasks_by_ctrl: dict[str, list] = {}
+    for t in program.tasks or []:
+        st = (t.status or "").upper()
+        if st in {"DONE", "COMPLETED", "CLOSED"}:
+            continue
+        ref = t.control_ref or ""
+        open_tasks_by_ctrl.setdefault(ref, []).append(t)
+
     for ctrl in checklist.controls:
+        status = ctrl.status
         for cov in ctrl.framework_coverage:
-            taxonomy = GapTaxonomy.IMPLEMENTATION
-            if cov.relation.value == "PARTIAL" and cov.uncovered_delta:
-                taxonomy = GapTaxonomy.PARTIAL_COVERAGE
-            elif ctrl.evidence_count == 0 and ctrl.status.value != "NOT_APPLICABLE":
-                taxonomy = GapTaxonomy.EVIDENCE
-            elif ctrl.open_task_count > 0 and is_overdue(ctrl.due_date):
-                taxonomy = GapTaxonomy.REMEDIATION
-            sev = (ctrl.priority or "MEDIUM").upper()
+            # PARTIAL_COVERAGE — only this coverage's uncovered_delta (no ctrl.gap_notes leak)
+            if cov.relation.value == "PARTIAL" and (cov.uncovered_delta or "").strip():
+                rows.append(
+                    _row(
+                        cov=cov,
+                        ctrl=ctrl,
+                        req_title=req_title,
+                        taxonomy=GapTaxonomy.PARTIAL_COVERAGE,
+                        gap=cov.uncovered_delta.strip(),
+                        mapped=True,
+                        severity="HIGH",
+                    )
+                )
+
+            # NEEDS_REVIEW core link without approved mapping
+            if cov.relation.value == "NEEDS_REVIEW":
+                rows.append(
+                    _row(
+                        cov=cov,
+                        ctrl=ctrl,
+                        req_title=req_title,
+                        taxonomy=GapTaxonomy.UNMAPPED,
+                        gap="Collegamento core senza mappatura WayFold approvata",
+                        mapped=False,
+                        severity="HIGH",
+                    )
+                )
+
+        # IMPLEMENTATION — once per control when status requires remediation
+        if status in {
+            ImplementationStatus.NOT_IMPLEMENTED,
+            ImplementationStatus.IN_PROGRESS,
+        }:
+            # Attach to primary coverage if any, else synthetic
+            cov = ctrl.framework_coverage[0] if ctrl.framework_coverage else None
+            if cov is not None:
+                rows.append(
+                    _row(
+                        cov=cov,
+                        ctrl=ctrl,
+                        req_title=req_title,
+                        taxonomy=GapTaxonomy.IMPLEMENTATION,
+                        gap=f"Stato implementazione: {status.value}",
+                        mapped=True,
+                        severity=(ctrl.priority or "MEDIUM").upper(),
+                    )
+                )
+
+        # EVIDENCE — when evidence is actually missing for a non-N/A control
+        if (
+            ctrl.evidence_count == 0
+            and status != ImplementationStatus.NOT_APPLICABLE
+            and ctrl.framework_coverage
+        ):
+            cov = ctrl.framework_coverage[0]
             rows.append(
-                GapRow(
-                    framework_id=cov.framework_id,
-                    framework_name=cov.framework_name,
-                    framework_version=cov.framework_version,
-                    requirement_id=cov.requirement_id,
-                    requirement_code=cov.requirement_code,
-                    requirement_title=req_title.get(cov.requirement_id, ""),
-                    canonical_control_ref=ctrl.canonical_control_ref,
-                    control_name=ctrl.name,
-                    mapping=cov.relation.value,
-                    status=ctrl.status.value,
-                    owner=ctrl.owner,
-                    deadline=ctrl.due_date,
-                    priority=ctrl.priority,
-                    evidence_count=ctrl.evidence_count,
-                    open_task_count=ctrl.open_task_count,
-                    gap=cov.uncovered_delta or ctrl.gap_notes,
-                    notes=cov.rationale,
+                _row(
+                    cov=cov,
+                    ctrl=ctrl,
+                    req_title=req_title,
+                    taxonomy=GapTaxonomy.EVIDENCE,
+                    gap="Evidenza richiesta mancante",
                     mapped=True,
-                    taxonomy=taxonomy,
-                    severity=sev,
+                    severity="MEDIUM",
                 )
             )
+
+        # REMEDIATION — specific open/overdue tasks linked to this control
+        refs = {
+            x
+            for x in (ctrl.canonical_control_ref, ctrl.implementation_id)
+            if x
+        }
+        for ref in refs:
+            for t in open_tasks_by_ctrl.get(ref, []):
+                st = (t.status or "").upper()
+                if st in {"DONE", "COMPLETED", "CLOSED"}:
+                    continue
+                if not (is_overdue(t.due_date) or st in {"TODO", "IN_PROGRESS", "OPEN", "REVIEW"}):
+                    continue
+                cov = ctrl.framework_coverage[0] if ctrl.framework_coverage else None
+                if cov is None:
+                    continue
+                note = f"Task aperta: {t.title}"
+                if is_overdue(t.due_date):
+                    note += " (scaduta)"
+                rows.append(
+                    _row(
+                        cov=cov,
+                        ctrl=ctrl,
+                        req_title=req_title,
+                        taxonomy=GapTaxonomy.REMEDIATION,
+                        gap=note,
+                        mapped=True,
+                        severity=(t.priority or ctrl.priority or "MEDIUM").upper(),
+                        owner=t.owner or ctrl.owner,
+                        deadline=t.due_date or ctrl.due_date,
+                    )
+                )
 
     for u in checklist.unmapped:
         rows.append(
@@ -134,10 +229,55 @@ def build_gap_rows(
         key=lambda r: (
             r.framework_name,
             r.requirement_code,
+            r.taxonomy,
             r.canonical_control_ref or "",
         )
     )
     return rows
+
+
+def gap_counters(rows: list[GapRow]) -> GapCounters:
+    req_ids = {r.requirement_id for r in rows if r.requirement_id}
+    return GapCounters(
+        requirements_with_problems=len(req_ids),
+        findings_total=len(rows),
+    )
+
+
+def _row(
+    *,
+    cov,
+    ctrl,
+    req_title: dict[str, str],
+    taxonomy: str,
+    gap: str,
+    mapped: bool,
+    severity: str,
+    owner: str | None = None,
+    deadline: str | None = None,
+) -> GapRow:
+    return GapRow(
+        framework_id=cov.framework_id,
+        framework_name=cov.framework_name,
+        framework_version=cov.framework_version,
+        requirement_id=cov.requirement_id,
+        requirement_code=cov.requirement_code,
+        requirement_title=req_title.get(cov.requirement_id, ""),
+        canonical_control_ref=ctrl.canonical_control_ref,
+        control_name=ctrl.name,
+        mapping=cov.relation.value,
+        status=ctrl.status.value if hasattr(ctrl.status, "value") else str(ctrl.status),
+        owner=owner if owner is not None else ctrl.owner,
+        deadline=deadline if deadline is not None else ctrl.due_date,
+        priority=ctrl.priority,
+        evidence_count=ctrl.evidence_count,
+        open_task_count=ctrl.open_task_count,
+        gap=gap,
+        notes=cov.rationale or "",
+        mapped=mapped,
+        taxonomy=taxonomy,
+        severity=severity,
+    )
 
 
 def filter_gap_rows(rows: list[GapRow], flt: GapFilter) -> list[GapRow]:
@@ -152,6 +292,9 @@ def filter_gap_rows(rows: list[GapRow], flt: GapFilter) -> list[GapRow]:
     if flt.status:
         st = flt.status.upper()
         out = [r for r in out if r.status.upper() == st]
+    if flt.taxonomy:
+        tax = flt.taxonomy.upper()
+        out = [r for r in out if (r.taxonomy or "").upper() == tax]
     if flt.owner:
         own = flt.owner.lower()
         out = [r for r in out if (r.owner or "").lower().find(own) >= 0]
@@ -163,7 +306,7 @@ def filter_gap_rows(rows: list[GapRow], flt: GapFilter) -> list[GapRow]:
     elif flt.mapped is False:
         out = [r for r in out if not r.mapped]
     if flt.missing_evidence is True:
-        out = [r for r in out if r.mapped and r.evidence_count <= 0]
+        out = [r for r in out if r.taxonomy == GapTaxonomy.EVIDENCE]
     if flt.deadline_before:
         before = parse_date(flt.deadline_before)
         if before:
@@ -192,6 +335,7 @@ def filter_gap_rows(rows: list[GapRow], flt: GapFilter) -> list[GapRow]:
             or q in (r.gap or "").lower()
             or q in (r.mapping or "").lower()
             or q in (r.notes or "").lower()
+            or q in (r.taxonomy or "").lower()
         ]
     return out
 

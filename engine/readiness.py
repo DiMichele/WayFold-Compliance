@@ -20,7 +20,8 @@ def _requirement_coverage(
 ) -> RequirementCoverage:
     if (result or "").lower() == "not_applicable":
         return RequirementCoverage.NOT_APPLICABLE
-    if relation is None:
+    if relation is None or relation == CoverageRelation.NEEDS_REVIEW:
+        # No approved WayFold mapping — never overstate readiness
         return RequirementCoverage.UNMAPPED
     if status in (None, ImplementationStatus.NOT_IMPLEMENTED):
         return RequirementCoverage.NOT_COVERED
@@ -62,7 +63,12 @@ def framework_readiness(
             # if any PARTIAL exists alongside FULL to same req, keep PARTIAL if that
             # mapping is the one recorded (multiple mappings unusual per req+control).
             prev_rel, prev_status = prev
-            rank = {CoverageRelation.FULL: 3, CoverageRelation.PARTIAL: 2, CoverageRelation.SUPPORTING: 1}
+            rank = {
+                CoverageRelation.FULL: 3,
+                CoverageRelation.PARTIAL: 2,
+                CoverageRelation.SUPPORTING: 1,
+                CoverageRelation.NEEDS_REVIEW: 0,
+            }
             if rank.get(cand[0], 0) > rank.get(prev_rel, 0):
                 req_best[cov.requirement_id] = cand
             elif cand[0] == prev_rel and _status_rank(cand[1]) > _status_rank(prev_status):

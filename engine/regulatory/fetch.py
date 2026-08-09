@@ -44,12 +44,30 @@ def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
     )
 
 
-def validate_url(url: str, *, allow_file: bool = True) -> str | None:
-    """Return error message if URL is not allowed; None if OK."""
+def _test_mode() -> bool:
+    import os
+
+    return os.environ.get("WAYFOLD_TEST_MODE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def validate_url(url: str, *, allow_file: bool | None = None) -> str | None:
+    """Return error message if URL is not allowed; None if OK.
+
+    Production default: HTTP/HTTPS only. file:// and fixture:// denied unless
+    explicit TEST MODE (WAYFOLD_TEST_MODE=1) or allow_file=True for tests.
+    """
     parsed = urlparse(url)
     scheme = (parsed.scheme or "").lower()
+    test = _test_mode()
+    if allow_file is None:
+        allow_file = test
     if scheme == "fixture":
-        return None
+        return None if test else "fixture_scheme_disabled"
     if scheme == "file":
         return None if allow_file else "file_scheme_disabled"
     if scheme in {"gopher", "ftp", "dict", "jar", "data"}:

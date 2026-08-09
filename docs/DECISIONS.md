@@ -1,5 +1,22 @@
 # DECISIONS — WayFold Compliance
 
+## [2026-08-09] Architecture realignment — stop dual GRC core drift
+
+Scelto:
+- Confermare Strategy B: CISO Assistant = authoritative GRC core; WayFold = overlay only where STRUCTURALLY MISSING.
+- Introduzione `CoreGrcGateway` come boundary stabile; niente accoppiamento diretto UI→ORM/HTTP.
+- Slice 0: security + gap/mapping/evidence/task/client fixes sul codice corrente senza big-bang migration.
+- KEEP custom: MappingRecord coverage (FULL/PARTIAL/SUPPORTING+delta+review), Regulatory*, AI*, ReportSnapshot, AutomatedEvidence* (flag OFF).
+- MIGRATE per slice: users/RBAC, Folder/Perimeter, AppliedControl, Evidence, TaskNode, libraries.
+- ProgramSnapshot: DTO / read model / fixture — non secondo core GRC a lungo termine.
+- Documentazione verità: nessun PASS su hook (MFA/scan/backup).
+
+Motivazione: review indipendente ha rilevato due GRC core paralleli; continuare la deriva è vietato.
+
+Rivedere se: Slice A–G completate; CISO espone nativamente coverage SUPPORTING+delta.
+
+---
+
 ## [2026-08-09] Product realignment — authoring workspace over viewer
 
 Scelto:

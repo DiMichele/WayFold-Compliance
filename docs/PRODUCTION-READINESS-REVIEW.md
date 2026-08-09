@@ -1,85 +1,46 @@
 # Production Readiness Review — WayFold Compliance
 
-Date: 2026-08-09  
+Date: 2026-08-09 (architecture & security realignment)  
 Live: https://compliance.wayfold.xyz/
 
 ## Gate summary
 
-| Area | Status |
-|---|---|
-| Authentication | PASS |
-| RBAC | PASS |
-| Tenant isolation | PASS |
-| Evidence authorization | PASS |
-| Framework immutability | PASS |
-| Audit | PASS |
-| Session security | PASS |
-| MFA | PARTIAL |
-| CSP/security headers | PASS |
-| Backups | PASS |
-| Restore test | PASS (isolated) |
-| Report snapshots | PASS |
-| Regulatory security | PASS |
-| Performance | PASS (demo scale) |
-| Known blockers | Temporary admin/admin; MFA enroll UI incomplete |
-
-## Authentication
-
-PASS — anonymous workspace → `/login`; cookie session firmata; logout invalida cookie.
-
-## RBAC
-
-PASS — ruoli SUPER_ADMIN / CONSULTANT / CLIENT_* / VIEWER con permission matrix e test positivi/negativi.
-
-## Tenant isolation
-
-PASS — API gate + browser/API tests con utenti Michele/Alfa.
-
-## Evidence authorization
-
-PASS — download binario autenticato/autorizzato; storage privato; anonymous/wrong tenant DENIED.
-
-## Framework immutability
-
-PASS — PATCH published DENIED; clone draft editable; publish workflow.
-
-## Audit
-
-PASS — eventi append-only + pagina Registro attività.
-
-## Session security
-
-PASS — HttpOnly, SameSite, Secure, idle 45m, absolute 8h, refresh sliding.
-
-## MFA
-
-PARTIAL — TOTP verify/enroll hooks implementati; temporary review credential senza MFA obbligatoria; enroll UI completa = blocker soft prima di REAL CLIENT DATA.
-
-## CSP / headers
-
-PASS (engine + nginx): HSTS, CSP, XCTO, Referrer-Policy, Permissions-Policy, frame-ancestors.
-
-## Backups / restore
-
-PASS — procedura documentata; restore isolato verificato via store tests. Restore distruttivo live non eseguito.
-
-## Report snapshots
-
-PASS — snapshot persistiti indipendenti da mutazioni successive.
-
-## Regulatory security
-
-PASS — SSRF blocklist ampliata; HTML escaped in UI; redirect non seguiti verso private IP.
-
-## Performance
-
-PASS a scala demo (5 client, 8 controlli). Pagination server-side già sui filtri gap; KB non carica 3000 req client-side.
+| Area | Status | Evidence |
+|---|---|---|
+| Authentication | PASS | login/session tests |
+| RBAC route-level | PASS | `test_security_realignment`, matrix |
+| Tenant isolation | PASS | hardening + SEC-CTRL-02 |
+| Evidence authorization | PASS | download + write gates |
+| Evidence binary upload | PASS | multipart path |
+| Framework immutability | PASS | service + 405 on GET probe |
+| Audit (append-only app log) | PASS | scoped list |
+| Session security | PASS | secret fail-closed, revoke |
+| CSRF | PASS | SEC-CSRF-01 |
+| MFA | PARTIAL | enforce without enroll; enroll UX incomplete |
+| CSP/security headers | PASS | engine + nginx |
+| Feature flags server-side | PASS | 404 when OFF |
+| Gap engine semantics | PASS | GAP-01 / GAP-02 |
+| Mapping approval semantics | PASS | MAP-01 / MAP-02 |
+| Backups scheduled/off-host | NOT IMPLEMENTED | see backups.md |
+| Restore drill prod-like | PARTIAL | local only |
+| Core migration complete | PARTIAL | Slice 0 only |
+| Playwright full authoring E2E | PARTIAL / NOT IMPLEMENTED | API/UI suite exists; full browser rewrite pending |
+| Known blockers | Temporary admin/admin; MFA enroll; backup ops; core cutover |
 
 ## READY FOR REAL CLIENT DATA
 
 **NO**
 
-Blocchi residui:
+Blocchi residui obbligatori:
 
-1. TEMPORARY REVIEW CREDENTIAL `admin/admin`
-2. MFA enrollment enforcement incompleto per SUPER_ADMIN/CONSULTANT
+1. TEMPORARY REVIEW CREDENTIAL  
+2. MFA enrollment UX completa  
+3. Scheduled + off-host backup + restore drill evidence  
+4. CISO core cutover slices A–G (or documented structural exceptions only)  
+5. DB optimistic locking concurrency  
+6. Malware scan if multi-tenant public upload required  
+7. Live `build_sha` independently verified  
+
+## READY FOR EXTERNAL REVIEW
+
+**YES** — with this document and `SECURITY-REMEDIATION-REPORT.md` as truth source.

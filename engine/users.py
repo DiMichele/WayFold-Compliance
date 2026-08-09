@@ -169,6 +169,9 @@ def set_password(username: str, password: str) -> None:
         raise KeyError(username)
     user.password_hash = _hash_password(password)
     upsert_user(user)
+    from engine.session_revoke import bump_user_sessions
+
+    bump_user_sessions(username)
 
 
 def load_assignments() -> dict[str, list[str]]:
@@ -210,6 +213,9 @@ def assign_consultant(username: str, tenant_ids: list[str]) -> None:
     if user and user.role_enum == Role.CONSULTANT:
         user.tenant_ids = list(tenant_ids)
         upsert_user(user)
+    from engine.session_revoke import bump_user_sessions
+
+    bump_user_sessions(username)
 
 
 def effective_tenant_ids(user: UserRecord) -> set[str]:

@@ -25,10 +25,16 @@ FIXTURE_ROOT = ROOT / "engine" / "fixtures" / "regulatory"
 
 class RegulatoryIntelligenceTests(unittest.TestCase):
     def setUp(self):
+        import os
+
+        os.environ["WAYFOLD_TEST_MODE"] = "1"
         self.tmp = tempfile.TemporaryDirectory()
         self.store = RegulatoryStore(Path(self.tmp.name))
 
     def tearDown(self):
+        import os
+
+        os.environ.pop("WAYFOLD_TEST_MODE", None)
         self.tmp.cleanup()
 
     def test_normalize_strips_script_style(self):

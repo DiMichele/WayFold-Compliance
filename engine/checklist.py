@@ -20,12 +20,19 @@ def _impl_by_id(program: ProgramSnapshot) -> dict[str, ControlImplementationSnap
     return {i.id: i for i in program.implementations}
 
 
+def _is_operational_mapping(m: MappingRecord) -> bool:
+    """Only APPROVED mappings affect checklist / readiness / coverage / impact.
+
+    DRAFT, AI_SUGGESTED, HUMAN_REVIEWED, REJECTED are non-operational.
+    """
+    return m.review_status.value == "APPROVED"
+
+
 def _mappings_by_requirement(program: ProgramSnapshot) -> dict[str, list[MappingRecord]]:
     out: dict[str, list[MappingRecord]] = defaultdict(list)
     for m in program.mappings:
-        if m.review_status.value == "REJECTED":
+        if not _is_operational_mapping(m):
             continue
-        # Prefer APPROVED / HUMAN_REVIEWED; still include DRAFT for visibility
         out[m.requirement_id].append(m)
     return out
 
@@ -136,6 +143,8 @@ def build_unified_checklist(program: ProgramSnapshot) -> UnifiedChecklist:
                         )
                     )
         else:
+            # Core AppliedControl link without approved WayFold mapping:
+            # NEVER implicit FULL — surface as NEEDS_REVIEW (not readiness credit).
             for iid in linked_impl_ids:
                 impl = impls.get(iid)
                 if not impl:
@@ -151,7 +160,11 @@ def build_unified_checklist(program: ProgramSnapshot) -> UnifiedChecklist:
                     },
                 )
                 bucket["impl"] = impl
-                cov_key = (req.id, impl.ref_id or impl.id, CoverageRelation.FULL.value)
+                cov_key = (
+                    req.id,
+                    impl.ref_id or impl.id,
+                    CoverageRelation.NEEDS_REVIEW.value,
+                )
                 if cov_key not in bucket["coverage_keys"]:
                     bucket["coverage_keys"].add(cov_key)
                     bucket["coverages"].append(
@@ -161,9 +174,9 @@ def build_unified_checklist(program: ProgramSnapshot) -> UnifiedChecklist:
                             framework_version=req.framework_version,
                             requirement_id=req.id,
                             requirement_code=req.code,
-                            relation=CoverageRelation.FULL,
+                            relation=CoverageRelation.NEEDS_REVIEW,
                             uncovered_delta="",
-                            rationale="Linked via core AppliedControl (implicit FULL)",
+                            rationale="Collegamento core senza mappatura WayFold approvata",
                         )
                     )
 
