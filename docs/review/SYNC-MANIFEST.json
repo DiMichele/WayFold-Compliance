@@ -1,0 +1,17 @@
+﻿{
+    "source_repo":  "DiMichele/WayFold",
+    "source_path":  "apps/wayfold-compliance",
+    "source_sha":  "0e6ac7a40fb07b9d46f7ffae06f838adf6de4fc1",
+    "mirror_repo":  "DiMichele/WayFold-Compliance",
+    "mirror_sha":  "",
+    "sync_timestamp":  "2026-08-09T10:33:50Z",
+    "tree_hash":  "pending-mirror-sync",
+    "live_build_sha":  "0e6ac7a40fb07b9d46f7ffae06f838adf6de4fc1",
+    "live_url":  "https://compliance.wayfold.xyz/",
+    "live_build_verified_at":  "2026-08-09T10:35:00Z",
+    "login_review":  {
+                         "user":  "admin",
+                         "password":  "admin",
+                         "note":  "TEMPORARY REVIEW CREDENTIAL — set by deploy/live-verify.sh on VPS"
+                     }
+}

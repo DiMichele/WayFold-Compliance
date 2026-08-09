@@ -4,7 +4,9 @@
 |---|---|
 | Repository | https://github.com/DiMichele/WayFold-Compliance |
 | Live | https://compliance.wayfold.xyz/ |
-| Deployed code SHA (monorepo sync) | `dab74ce204fcbfffa6e58a6d4942f1f27c0e1feb` |
+| Deployed code SHA (monorepo) | see `docs/review/SYNC-MANIFEST.json` → `source_sha` / `live_build_sha` |
+| Screenshot manifest | `docs/review/SCREENSHOT-MANIFEST.json` |
+| Test actions | `docs/review/REVIEW-TEST-ACTIONS.md` |
 | Report | `docs/review/PRODUCT-REALIGNMENT.md` |
 | Screenshots (authoring realign) | `docs/review/realign/` |
 | Screenshots (full pack) | `docs/review/final/` |

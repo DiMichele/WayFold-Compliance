@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-08-09T10:30:16Z",
+  "live": "https://compliance.wayfold.xyz",
+  "dataset": "WF_REVIEW_DEMO_2026",
+  "entries": [
+    {
+      "page": "Login",
+      "url": "https://compliance.wayfold.xyz/login",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/01-login.png",
+      "image_sha256": "d729d609313c9363562ad488df496d45e45633ec02e87c0d09ffbc8c58c6aa35",
+      "bytes": 343164
+    },
+    {
+      "page": "Portfolio",
+      "url": "https://compliance.wayfold.xyz/portfolio",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/02-portfolio.png",
+      "image_sha256": "31a23d2ee470db122db18403df0ec15bcbd66f08d18cdc24bfb526ac39136cc3",
+      "bytes": 220977
+    },
+    {
+      "page": "Portfolio",
+      "url": "https://compliance.wayfold.xyz/portfolio",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/01-portfolio.png",
+      "image_sha256": "a75869766fb3ae122a1c9e49e613fc01c7f15c0b09c0588a5d33e7129c474e96",
+      "bytes": 94715
+    },
+    {
+      "page": "Clienti",
+      "url": "https://compliance.wayfold.xyz/clients",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/03-clients.png",
+      "image_sha256": "e5044bf213e19a0207a94982407a3ed88f671f28313707f40e6e6cef2f01d9aa",
+      "bytes": 163681
+    },
+    {
+      "page": "Clienti",
+      "url": "https://compliance.wayfold.xyz/clients",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/06-clients.png",
+      "image_sha256": "e5044bf213e19a0207a94982407a3ed88f671f28313707f40e6e6cef2f01d9aa",
+      "bytes": 163681
+    },
+    {
+      "page": "Workspace Michele",
+      "url": "https://compliance.wayfold.xyz/client?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/04-michele-workspace.png",
+      "image_sha256": "d3dc2a2645663dfbf13fa73abd923b67aa7320c28092350713722a0aea6b28e7",
+      "bytes": 208975
+    },
+    {
+      "page": "Unified Controls",
+      "url": "https://compliance.wayfold.xyz/checklist?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/05-unified-controls.png",
+      "image_sha256": "3c923ceb073762ae164c7deb1ccb0528a66f0006e96961b36b748b2c905327d1",
+      "bytes": 285068
+    },
+    {
+      "page": "Control IAM",
+      "url": "https://compliance.wayfold.xyz/control?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/06-control-iam-detail.png",
+      "image_sha256": "f92a14277a3ba4eaf765e2577da3d700e5c4f958ad302d21b159f86ecf7b3b1f",
+      "bytes": 194784
+    },
+    {
+      "page": "Gap Assessment",
+      "url": "https://compliance.wayfold.xyz/gaps?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/07-gap-assessment.png",
+      "image_sha256": "9bb77c4cf2de33c00829310f536d7f646a41f43c178072668f3d06c57938d70b",
+      "bytes": 284177
+    },
+    {
+      "page": "Tasks",
+      "url": "https://compliance.wayfold.xyz/tasks?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/08-tasks.png",
+      "image_sha256": "25fce6f77de1ed4054bda6fb4872d52ef13eae1535dfb3267a4cc540361fad6c",
+      "bytes": 190226
+    },
+    {
+      "page": "Evidence",
+      "url": "https://compliance.wayfold.xyz/evidence?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/09-evidence.png",
+      "image_sha256": "c3a7a2d2d89934f451b5b14452805246ed5e4f592d639f755a80dabd49f9cba3",
+      "bytes": 236932
+    },
+    {
+      "page": "Frameworks",
+      "url": "https://compliance.wayfold.xyz/frameworks",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/10-frameworks.png",
+      "image_sha256": "360813120614a60c07fa9d5d4744ba8f8fa4a11ec9973eadeb0f41ce2904f456",
+      "bytes": 157131
+    },
+    {
+      "page": "Frameworks",
+      "url": "https://compliance.wayfold.xyz/frameworks",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/02-framework-list.png",
+      "image_sha256": "c175bc27cf586634fb46474b132dc1da423afb30f853e3cdf8f501d1f8945186",
+      "bytes": 97090
+    },
+    {
+      "page": "Nuovo framework",
+      "url": "https://compliance.wayfold.xyz/frameworks/new",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/03-framework-create.png",
+      "image_sha256": "1bf287e87535f2d11df06d3716e635ce5e6504ea3bc836f0eae596d735ef628d",
+      "bytes": 98860
+    },
+    {
+      "page": "Framework NIS2 versions",
+      "url": "https://compliance.wayfold.xyz/frameworks/detail?framework_id=fw-nis2-it-2026-1&tab=versions",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/11-framework-nis2-detail.png",
+      "image_sha256": "6ac2b76f2b2d3191a8bd54b0634810902ebc923c06c28cecce37a871b9759092",
+      "bytes": 162057
+    },
+    {
+      "page": "Framework NIS2 versions",
+      "url": "https://compliance.wayfold.xyz/frameworks/detail?framework_id=fw-nis2-it-2026-1&tab=versions",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/05-nis2-versions.png",
+      "image_sha256": "02a29e09f562f4739494a7e4440e609081337732ebdbf6481703185bf2d7fff6",
+      "bytes": 97104
+    },
+    {
+      "page": "Catalogo controlli",
+      "url": "https://compliance.wayfold.xyz/controls",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/realign/04-control-catalog.png",
+      "image_sha256": "682b9116b697f6930e5bcbb9ab54511e9fe029cdd41ede1e416cd8854da26617",
+      "bytes": 95163
+    },
+    {
+      "page": "Mappature",
+      "url": "https://compliance.wayfold.xyz/mappings",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/12-mappings.png",
+      "image_sha256": "7e114ea9aedee4e7dee82b0ff2a5eb4879c695d4044f0a8ec85e2f4e198cd523",
+      "bytes": 287284
+    },
+    {
+      "page": "Regulatory",
+      "url": "https://compliance.wayfold.xyz/changes",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/13-regulatory.png",
+      "image_sha256": "e76980a0d22c1162d8a2cb7f8c1c10d54c1dab6abdc14ac50d8b0c7b9742f1bf",
+      "bytes": 226369
+    },
+    {
+      "page": "Report",
+      "url": "https://compliance.wayfold.xyz/report?program_id=program-michele-cyber-2026",
+      "role": "SUPER_ADMIN (admin)",
+      "program": "program-michele-cyber-2026",
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/14-report.png",
+      "image_sha256": "379a6102b87e77fa62033e99e252b68a492a4d0de58a22349fd6628b1374b06a",
+      "bytes": 227816
+    },
+    {
+      "page": "Settings",
+      "url": "https://compliance.wayfold.xyz/settings",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/15-settings.png",
+      "image_sha256": "415d38d1538499ed3ada83513c8b75d2f5cf43e4af72525593edd2463a98f5b1",
+      "bytes": 168259
+    },
+    {
+      "page": "Audit log",
+      "url": "https://compliance.wayfold.xyz/audit",
+      "role": "SUPER_ADMIN (admin)",
+      "program": null,
+      "timestamp": "2026-08-09T10:30:16Z",
+      "image_path": "docs/review/final/16-audit-log.png",
+      "image_sha256": "075b985f4fdd05774e706a11a4d25f26e57044fcdb5ce5f16f30358e54ee80c1",
+      "bytes": 163679
+    }
+  ],
+  "duplicate_sha256_groups": {
+    "e5044bf213e19a0207a94982407a3ed88f671f28313707f40e6e6cef2f01d9aa": [
+      "docs/review/final/03-clients.png",
+      "docs/review/realign/06-clients.png"
+    ]
+  }
+}

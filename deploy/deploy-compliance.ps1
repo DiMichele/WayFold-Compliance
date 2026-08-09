@@ -114,6 +114,12 @@ if ($SetupTls) {
 ssh $Remote "curl -fsS -H 'Host: localhost' http://127.0.0.1:18000/api/health/ || docker inspect -f '{{.State.Health.Status}}' wayfold-compliance-backend | grep -qx healthy"
 if ($LASTEXITCODE -ne 0) { throw "Local backend health failed on VPS" }
 
+Write-Host "-> Reload nginx site (build-info route)"
+ssh $Remote "sudo -n cp $RemoteDir/deploy/nginx-compliance.conf /etc/nginx/sites-available/compliance && sudo -n nginx -t && sudo -n systemctl reload nginx" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "WARN: nginx reload skipped (needs passwordless sudo or root)."
+}
+
 Write-Host ""
 if ($tlsOk) {
     Write-Host "Deploy completato: https://compliance.wayfold.xyz"
