@@ -1,0 +1,366 @@
+{
+  "tenant_id": "tenant-delta-demo",
+  "tenant_name": "Delta Services S.p.A. [Demo]",
+  "program_id": "program-delta-cloud-2026",
+  "program_name": "Cloud Security Assurance 2026",
+  "scope": "Managed cloud services",
+  "program_status": "ACTIVE",
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "requirements": [
+    {
+      "id": "d-ccm-01",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "code": "CCM-IAM-01",
+      "title": "Identity management",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "d-ccm-02",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "code": "CCM-LOG-01",
+      "title": "Logging",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "d-ccm-03",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "code": "CCM-ENC-01",
+      "title": "Encryption",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "d-ccm-04",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "code": "CCM-IR-01",
+      "title": "Incident response",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "d-iso-01",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.15",
+      "title": "Access control",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "d-iso-02",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.24",
+      "title": "Incidents",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "d-iso-99",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-X",
+      "title": "Residual requirement",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "d-impl-iam",
+      "ref_id": "CTRL-IAM-001",
+      "name": "CCM IAM",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Delta",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 2,
+      "open_task_count": 0,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "d-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "CCM Logging",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Delta",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "d-impl-enc",
+      "ref_id": "CTRL-ENC-001",
+      "name": "CCM Encryption",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Delta",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "d-impl-ir",
+      "ref_id": "CTRL-IR-001",
+      "name": "CCM Incident",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "IN_PROGRESS",
+      "owner": "Sec Delta",
+      "due_date": "2026-09-01",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "d-impl-bcp",
+      "ref_id": "CTRL-BCP-001",
+      "name": "CCM Continuity",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "status": "IMPLEMENTED",
+      "owner": "BCM Delta",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "d-impl-sup",
+      "ref_id": "CTRL-SUP-001",
+      "name": "CCM Supply",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "status": "IN_PROGRESS",
+      "owner": "Proc Delta",
+      "due_date": "2026-08-27",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-delta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "d-ccm-01",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "requirement_code": "CCM-IAM-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito CCM-IAM-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "d-ccm-02",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "requirement_code": "CCM-LOG-01",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito CCM-LOG-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "d-ccm-03",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "requirement_code": "CCM-ENC-01",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-ENC-001 copre il requisito CCM-ENC-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "d-ccm-04",
+      "framework_id": "fw-ccm-v4",
+      "framework_name": "CSA STAR / CCM",
+      "framework_version": "4.0",
+      "requirement_code": "CCM-IR-01",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito CCM-IR-01 nel perimetro del programma.",
+      "uncovered_delta": "Manca tabletop exercise annuale CCM",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "d-iso-01",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.15",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito ISO-A.5.15 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "d-iso-02",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.24",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito ISO-A.5.24 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "d-ccm-01": [
+      "d-impl-iam"
+    ],
+    "d-ccm-02": [
+      "d-impl-log"
+    ],
+    "d-ccm-03": [
+      "d-impl-enc"
+    ],
+    "d-ccm-04": [
+      "d-impl-ir"
+    ],
+    "d-iso-01": [
+      "d-impl-iam"
+    ],
+    "d-iso-02": [
+      "d-impl-ir"
+    ]
+  },
+  "evidences": [
+    {
+      "id": "D-EV-001",
+      "title": "CCM IAM Evidence Pack",
+      "filename": "CCM IAM Evidence Pack.pdf",
+      "control_refs": [
+        "CTRL-IAM-001"
+      ],
+      "status": "VALID",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "D-EV-002",
+      "title": "Encryption Config",
+      "filename": "Encryption Config.json",
+      "control_refs": [
+        "CTRL-ENC-001"
+      ],
+      "status": "VALID",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "D-EV-003",
+      "title": "IR Playbook",
+      "filename": "IR Playbook.pdf",
+      "control_refs": [
+        "CTRL-IR-001"
+      ],
+      "status": "REVIEW_REQUIRED",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "D-TASK-001",
+      "title": "Eseguire tabletop CCM IR",
+      "control_ref": "CTRL-IR-001",
+      "owner": "Sec Delta",
+      "status": "TODO",
+      "due_date": "2026-09-01",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "D-TASK-002",
+      "title": "Chiudere gap supply CCM",
+      "control_ref": "CTRL-SUP-001",
+      "owner": "Proc Delta",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-27",
+      "priority": "MEDIUM",
+      "notes": ""
+    }
+  ],
+  "available_framework_versions": []
+}

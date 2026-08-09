@@ -23,10 +23,13 @@ Prima di fare qualunque cosa:
 - Tenant isolation e authorization server-side.
 - Evidence e task devono riusare il motore già scelto.
 - AI suggerisce, umano approva.
+- **Nessun dato di accesso prodotto WayFold Compliance per ora:** non introdurre/richiedere login, password utente, SSO o onboarding credential WayFold. Non bloccare fasi chiedendo credenziali all’operatore. Usa auth tecnica locale di demo/dev e le auth già configurate per Cursor/Git.
+- **Brand = WayFold Compliance:** nessun riferimento user-facing a vendor/motori GRC di terze parti (nomi prodotto altrui). Il core OSS resta dettaglio di implementazione interno.
+- **UI = ecosistema WayFold (come Bills):** ogni nuova pagina HTML WayFold deve riusare `engine/ui_shell.py` (palette charcoal/sage/terracotta/sand, Jost/Inter/DM Mono). Non inventare stili admin generici.
 - Nessun avanzamento automatico alla fase successiva oltre lo scope del prompt di transizione corrente.
 - Non creare tag `phase-N-complete`: lo crea l'orchestratore dopo un PASS indipendente.
 - Non modificare `apps/wayfold-compliance/.wayfold/state.json` direttamente.
-- Non fare deploy production / DNS / DB production.
+- Non fare deploy production manuale ad-hoc: il deploy su `compliance.wayfold.xyz` è gestito dall'orchestratore (`autoDeploy`) dopo merge su main via `deploy/deploy-compliance.ps1`. Non cambiare DNS a mano.
 - Non usare force push, reset --hard, clean -fd distruttivi.
 - Migration distruttive su dati esistenti → BLOCKED / segnala HUMAN_REVIEW (non eseguirle).
 - Aggiorna `PROGRESS.md` e `DECISIONS.md` solo quando necessario e coerentemente con lo stato reale.

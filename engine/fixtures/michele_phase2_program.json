@@ -1,0 +1,228 @@
+{
+  "tenant_id": "tenant-michele",
+  "tenant_name": "Michele Demo",
+  "program_id": "program-cyber-demo",
+  "program_name": "Cyber Compliance Demo",
+  "requirements": [
+    {
+      "id": "req-a-01",
+      "framework_id": "fw-a",
+      "framework_name": "Framework A (ISO-like)",
+      "framework_version": "2013.1",
+      "code": "A.5.1",
+      "title": "Access control policy",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "req-a-02",
+      "framework_id": "fw-a",
+      "framework_name": "Framework A (ISO-like)",
+      "framework_version": "2013.1",
+      "code": "A.5.2",
+      "title": "Privileged access review annual",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "req-a-99",
+      "framework_id": "fw-a",
+      "framework_name": "Framework A (ISO-like)",
+      "framework_version": "2013.1",
+      "code": "A.9.9",
+      "title": "Exotic logging format",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "req-b-01",
+      "framework_id": "fw-b",
+      "framework_name": "Framework B (NIS2-like)",
+      "framework_version": "2026.1",
+      "code": "NIS2-IAM",
+      "title": "Privileged access controls",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "req-b-02",
+      "framework_id": "fw-b",
+      "framework_name": "Framework B (NIS2-like)",
+      "framework_version": "2026.1",
+      "code": "NIS2-IR",
+      "title": "Incident response capability",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "req-b-99",
+      "framework_id": "fw-b",
+      "framework_name": "Framework B (NIS2-like)",
+      "framework_version": "2026.1",
+      "code": "NIS2-X9",
+      "title": "Sector-specific reporting channel",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "req-c-01",
+      "framework_id": "fw-c",
+      "framework_name": "Framework C (CSF-like)",
+      "framework_version": "2.0",
+      "code": "PR.AA-01",
+      "title": "Identity and credentials",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "req-c-02",
+      "framework_id": "fw-c",
+      "framework_name": "Framework C (CSF-like)",
+      "framework_version": "2.0",
+      "code": "RC.RP-01",
+      "title": "Recovery plan",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "impl-iam-001",
+      "ref_id": "CTRL-IAM-001",
+      "name": "Privileged access management",
+      "canonical_control_id": "canon-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "IMPLEMENTED",
+      "owner": "admin@wayfold.local",
+      "due_date": "2026-10-07",
+      "priority": "HIGH",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-michele"
+    },
+    {
+      "id": "impl-iam-002",
+      "ref_id": "CTRL-IAM-002",
+      "name": "Access control policy baseline",
+      "canonical_control_id": "canon-iam-002",
+      "canonical_control_ref": "CTRL-IAM-002",
+      "status": "IN_PROGRESS",
+      "owner": null,
+      "due_date": "2026-09-07",
+      "priority": "MEDIUM",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele"
+    },
+    {
+      "id": "impl-ir-001",
+      "ref_id": "CTRL-IR-001",
+      "name": "Incident response runbook",
+      "canonical_control_id": "canon-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": null,
+      "due_date": null,
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 0,
+      "folder_id": "tenant-michele"
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "req-a-01",
+      "framework_id": "fw-a",
+      "framework_name": "Framework A (ISO-like)",
+      "framework_version": "2013.1",
+      "requirement_code": "A.5.1",
+      "canonical_control_id": "canon-iam-002",
+      "canonical_control_ref": "CTRL-IAM-002",
+      "relation": "FULL",
+      "rationale": "Policy baseline covers ISO access control policy",
+      "uncovered_delta": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "req-a-02",
+      "framework_id": "fw-a",
+      "framework_name": "Framework A (ISO-like)",
+      "framework_version": "2013.1",
+      "requirement_code": "A.5.2",
+      "canonical_control_id": "canon-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "PARTIAL",
+      "rationale": "PAM covers privileged access but review cadence differs",
+      "uncovered_delta": "ISO requires annual privileged access review; PAM currently enforces continuous authz only",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "req-b-01",
+      "framework_id": "fw-b",
+      "framework_name": "Framework B (NIS2-like)",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-IAM",
+      "canonical_control_id": "canon-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "PARTIAL",
+      "rationale": "PAM supports NIS2 privileged access; semi-annual review missing",
+      "uncovered_delta": "NIS2 expects semi-annual review of privileged accounts",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "req-b-02",
+      "framework_id": "fw-b",
+      "framework_name": "Framework B (NIS2-like)",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-IR",
+      "canonical_control_id": "canon-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "FULL",
+      "rationale": "IR runbook maps fully",
+      "uncovered_delta": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "req-c-01",
+      "framework_id": "fw-c",
+      "framework_name": "Framework C (CSF-like)",
+      "framework_version": "2.0",
+      "requirement_code": "PR.AA-01",
+      "canonical_control_id": "canon-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "CSF identity/credentials covered by PAM",
+      "uncovered_delta": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "req-c-02",
+      "framework_id": "fw-c",
+      "framework_name": "Framework C (CSF-like)",
+      "framework_version": "2.0",
+      "requirement_code": "RC.RP-01",
+      "canonical_control_id": "canon-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "SUPPORTING",
+      "rationale": "PAM supports recovery identity restoration only",
+      "uncovered_delta": "Full recovery plan / BCP still required beyond IAM",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "req-a-01": ["impl-iam-002"],
+    "req-a-02": ["impl-iam-001"],
+    "req-b-01": ["impl-iam-001"],
+    "req-b-02": ["impl-ir-001"],
+    "req-c-01": ["impl-iam-001"],
+    "req-c-02": ["impl-iam-001"]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "programs": [
+    {
+      "snapshot": "michele_cyber_2026.json",
+      "last_activity": "2026-08-09",
+      "dataset_marker": "WF_REVIEW_DEMO_2026"
+    },
+    {
+      "snapshot": "alfa_cloud_2026.json",
+      "last_activity": "2026-08-09",
+      "dataset_marker": "WF_REVIEW_DEMO_2026"
+    },
+    {
+      "snapshot": "beta_finance_2026.json",
+      "last_activity": "2026-08-09",
+      "dataset_marker": "WF_REVIEW_DEMO_2026"
+    },
+    {
+      "snapshot": "nova_health_2026.json",
+      "last_activity": "2026-08-09",
+      "dataset_marker": "WF_REVIEW_DEMO_2026"
+    },
+    {
+      "snapshot": "delta_services_2026.json",
+      "last_activity": "2026-08-09",
+      "dataset_marker": "WF_REVIEW_DEMO_2026"
+    }
+  ]
+}

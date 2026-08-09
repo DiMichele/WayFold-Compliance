@@ -1,0 +1,374 @@
+{
+  "tenant_id": "tenant-beta-demo",
+  "tenant_name": "Beta Finance S.p.A. [Demo]",
+  "program_id": "program-beta-ict-2026",
+  "program_name": "ICT Resilience 2026",
+  "scope": "ICT services essenziali",
+  "program_status": "ACTIVE",
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "requirements": [
+    {
+      "id": "b-dora-01",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "code": "DORA-01",
+      "title": "ICT risk management",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "b-dora-02",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "code": "DORA-02",
+      "title": "Incident management",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "b-dora-03",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "code": "DORA-03",
+      "title": "Business continuity",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "b-dora-04",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "code": "DORA-04",
+      "title": "Third-party risk",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "b-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-01",
+      "title": "Privileged access",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "b-nis2-02",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-04",
+      "title": "Continuity",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "b-nis2-99",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-X",
+      "title": "Reporting channel",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "b-impl-iam",
+      "ref_id": "CTRL-IAM-001",
+      "name": "PAM finance",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "IAM Beta",
+      "due_date": "2026-08-05",
+      "priority": "CRITICAL",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "b-impl-ir",
+      "ref_id": "CTRL-IR-001",
+      "name": "Incident ICT",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "IN_PROGRESS",
+      "owner": "SOC Beta",
+      "due_date": "2026-08-06",
+      "priority": "HIGH",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "b-impl-bcp",
+      "ref_id": "CTRL-BCP-001",
+      "name": "ICT continuity",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "BCM Beta",
+      "due_date": "2026-08-08",
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "b-impl-sup",
+      "ref_id": "CTRL-SUP-001",
+      "name": "ICT third parties",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "Proc Beta",
+      "due_date": "2026-08-12",
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "b-impl-gov",
+      "ref_id": "CTRL-GOV-001",
+      "name": "ICT risk governance",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "status": "IN_PROGRESS",
+      "owner": "CRO Beta",
+      "due_date": "2026-08-22",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "b-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "Monitoring ICT",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IN_PROGRESS",
+      "owner": "SOC Beta",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-beta-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "b-dora-01",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "requirement_code": "DORA-01",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-GOV-001 copre il requisito DORA-01 nel perimetro del programma.",
+      "uncovered_delta": "Manca formalizzazione board reporting DORA",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "b-dora-02",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "requirement_code": "DORA-02",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito DORA-02 nel perimetro del programma.",
+      "uncovered_delta": "Tempistiche DORA non complete",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "b-dora-03",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "requirement_code": "DORA-03",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-BCP-001 copre il requisito DORA-03 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "b-dora-04",
+      "framework_id": "fw-dora-2025",
+      "framework_name": "DORA",
+      "framework_version": "2025.1",
+      "requirement_code": "DORA-04",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-SUP-001 copre il requisito DORA-04 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "b-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito NIS2-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "b-nis2-02",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-04",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-BCP-001 copre il requisito NIS2-04 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "b-dora-01": [
+      "b-impl-gov"
+    ],
+    "b-dora-02": [
+      "b-impl-ir"
+    ],
+    "b-dora-03": [
+      "b-impl-bcp"
+    ],
+    "b-dora-04": [
+      "b-impl-sup"
+    ],
+    "b-nis2-01": [
+      "b-impl-iam"
+    ],
+    "b-nis2-02": [
+      "b-impl-bcp"
+    ]
+  },
+  "evidences": [
+    {
+      "id": "B-EV-001",
+      "title": "Incident Runbook Draft",
+      "filename": "Incident Runbook Draft.pdf",
+      "control_refs": [
+        "CTRL-IR-001"
+      ],
+      "status": "PARTIAL",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "B-EV-002",
+      "title": "Risk Register Extract",
+      "filename": "Risk Register Extract.csv",
+      "control_refs": [
+        "CTRL-GOV-001"
+      ],
+      "status": "REVIEW_REQUIRED",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "B-TASK-001",
+      "title": "Attivare PAM sui sistemi critici",
+      "control_ref": "CTRL-IAM-001",
+      "owner": "IAM Beta",
+      "status": "TODO",
+      "due_date": "2026-08-05",
+      "priority": "CRITICAL",
+      "notes": ""
+    },
+    {
+      "id": "B-TASK-002",
+      "title": "Chiudere gap incident DORA",
+      "control_ref": "CTRL-IR-001",
+      "owner": "SOC Beta",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-06",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "B-TASK-003",
+      "title": "Eseguire test BCP ICT",
+      "control_ref": "CTRL-BCP-001",
+      "owner": "BCM Beta",
+      "status": "TODO",
+      "due_date": "2026-08-08",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "B-TASK-004",
+      "title": "Due diligence fornitori ICT",
+      "control_ref": "CTRL-SUP-001",
+      "owner": "Proc Beta",
+      "status": "TODO",
+      "due_date": "2026-08-12",
+      "priority": "HIGH",
+      "notes": ""
+    }
+  ],
+  "available_framework_versions": []
+}

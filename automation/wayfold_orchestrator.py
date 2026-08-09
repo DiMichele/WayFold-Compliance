@@ -69,6 +69,17 @@ def stamp() -> str:
     return datetime.now().strftime("%Y%m%d-%H%M%S")
 
 
+def _safe_print(text: str) -> None:
+    """Print without crashing on Windows cp1252 consoles."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+        sys.stdout.write(text.encode(encoding, errors="replace").decode(encoding, errors="replace"))
+        sys.stdout.write("\n")
+
+
+
 def run_cmd(
     args: list[str],
     cwd: Path,
@@ -99,7 +110,8 @@ def find_repo_root(start: Path | None = None) -> Path:
 
 def read_json(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        # utf-8-sig tolerates BOM occasionally written by Windows/agents
+        return json.loads(path.read_text(encoding="utf-8-sig"))
     except FileNotFoundError as exc:
         raise OrchestratorError(f"Missing required file: {path}") from exc
     except json.JSONDecodeError as exc:
@@ -182,16 +194,25 @@ class Context:
             "autoPush",
             "autoTag",
             "autoMergeMain",
+            "autoDeploy",
         ):
             if key not in self.config:
                 raise OrchestratorError(f"config.json missing {key}")
-        if self.config.get("autoDeploy"):
-            raise OrchestratorError("autoDeploy is forbidden")
+        if self.config.get("autoDeployProductionDns"):
+            raise OrchestratorError("autoDeployProductionDns is forbidden (use deploy scripts)")
 
     def save_state(self) -> None:
         self.state["updatedAt"] = now_iso()
         # Mirror config toggles into state for machine-readable audit
-        for key in ("autoCommit", "autoPush", "autoTag", "autoMergeMain", "maxAutomaticFixAttempts", "maxPhase"):
+        for key in (
+            "autoCommit",
+            "autoPush",
+            "autoTag",
+            "autoMergeMain",
+            "autoDeploy",
+            "maxAutomaticFixAttempts",
+            "maxPhase",
+        ):
             if key in self.config:
                 self.state[key] = self.config[key]
         validate_state(self.state)
@@ -297,23 +318,44 @@ def classify_dirty(paths: list[str]) -> dict[str, list[str]]:
     compliance = []
     automation = []
     other = []
+    shared_ok = []
     for line in paths:
-        path = line[3:].strip() if len(line) > 3 else line
-        if path.startswith("apps/wayfold-compliance/") or path.startswith(r"apps\wayfold-compliance"):
-            if "/automation/" in path or "/.wayfold/" in path or "/prompts/" in path or "\\automation\\" in path:
+        path = line[3:].strip().replace("\\", "/") if len(line) > 3 else line.replace("\\", "/")
+        if path.startswith("apps/wayfold-compliance/") or path == "apps/wayfold-compliance":
+            if any(x in path for x in ("/automation/", "/.wayfold/", "/prompts/")):
                 automation.append(line)
             else:
                 compliance.append(line)
         elif path.startswith(".github/workflows/wayfold-compliance"):
             automation.append(line)
+        elif path in {".gitignore"} or path.startswith("wayfold-compliance-automation-overlay"):
+            shared_ok.append(line)
         else:
             other.append(line)
-    return {"compliance": compliance, "automation": automation, "other": other}
+    return {
+        "compliance": compliance,
+        "automation": automation,
+        "shared_ok": shared_ok,
+        "other": other,
+    }
+
+
+def ensure_no_nested_git(ctx: Context) -> None:
+    """apps/wayfold-compliance must be a normal directory, not a nested repo/gitlink."""
+    nested = ctx.repo / APP_REL / ".git"
+    if not nested.exists():
+        return
+    print(f"Removing nested git metadata at {nested} (monorepo tracking required)")
+    if nested.is_dir():
+        shutil.rmtree(nested)
+    else:
+        nested.unlink()
 
 
 def commit_changes(ctx: Context, message: str) -> bool:
     if not ctx.config.get("autoCommit", True):
         return False
+    ensure_no_nested_git(ctx)
     dirty = git_dirty(ctx.repo)
     if not dirty:
         return False
@@ -322,8 +364,14 @@ def commit_changes(ctx: Context, message: str) -> bool:
         path = line[3:].strip()
         if path.endswith(".env") or "credentials" in path.lower():
             raise OrchestratorError(f"Refusing to commit secret-like path: {path}")
-    run_cmd(["git", "add", "-A", "--", "apps/wayfold-compliance", ".github/workflows"], ctx.repo)
-    # Also add root gitignore changes if related
+    # Drop accidental gitlink/submodule mode before re-adding real files
+    ls = run_cmd(["git", "ls-files", "-s", "--", str(APP_REL)], ctx.repo)
+    if ls.stdout.strip().startswith("160000"):
+        run_cmd(["git", "rm", "--cached", "-f", "--", str(APP_REL)], ctx.repo)
+    run_cmd(
+        ["git", "add", "-A", "--", "apps/wayfold-compliance", ".github/workflows", ".gitignore"],
+        ctx.repo,
+    )
     staged = run_cmd(["git", "diff", "--cached", "--name-only"], ctx.repo).stdout.strip()
     if not staged:
         return False
@@ -368,20 +416,55 @@ def tag_phase(ctx: Context, phase: int) -> None:
 # --- Cursor agent ---------------------------------------------------------
 
 
+def _windows_agent_node_argv(local_dir: Path) -> list[str] | None:
+    """Resolve node.exe + index.js so stdin/UTF-8 work (avoid cmd.ps1 wrappers)."""
+    versions = local_dir / "versions"
+    if not versions.is_dir():
+        return None
+    dirs = [p for p in versions.iterdir() if p.is_dir()]
+    if not dirs:
+        return None
+
+    def sort_key(p: Path) -> tuple:
+        # Names like 2026.08.04-aaa8809 or 2026.08.04-12-00-00-aaa8809
+        return p.name
+
+    for version_dir in sorted(dirs, key=sort_key, reverse=True):
+        node = version_dir / "node.exe"
+        index = version_dir / "index.js"
+        if node.exists() and index.exists():
+            return [str(node), str(index)]
+    return None
+
+
 def resolve_cursor_command(config: dict[str, Any]) -> list[str]:
-    candidates = []
+    """Return a subprocess-safe argv for the Cursor Agent CLI."""
+    local_dir = Path(os.environ.get("LOCALAPPDATA", "")) / "cursor-agent"
+    # Prefer direct node entry on Windows for reliable stdin piping.
+    if os.name == "nt":
+        node_argv = _windows_agent_node_argv(local_dir)
+        if node_argv:
+            return node_argv
+
+    candidates: list[list[str]] = []
     raw = str(config.get("cursorCommand", "agent")).strip()
-    if raw:
+    if raw and raw not in {"agent", "cursor-agent"}:
         candidates.append(shlex.split(raw, posix=(os.name != "nt")))
     for name in ("agent", "cursor-agent"):
         path = shutil.which(name)
         if path:
-            candidates.append([path])
-    local = Path(os.environ.get("LOCALAPPDATA", "")) / "cursor-agent" / "agent.exe"
-    if local.exists():
-        candidates.append([str(local)])
+            if os.name == "nt" and path.lower().endswith((".cmd", ".bat")):
+                candidates.append(["cmd", "/c", path])
+            else:
+                candidates.append([path])
+    for exe in ("agent.exe", "cursor-agent.exe"):
+        local = local_dir / exe
+        if local.exists():
+            candidates.append([str(local)])
     for parts in candidates:
-        if parts and (shutil.which(parts[0]) or Path(parts[0]).exists()):
+        if not parts:
+            continue
+        if parts[0] in {"cmd", "powershell"} or shutil.which(parts[0]) or Path(parts[0]).exists():
             return parts
     raise OrchestratorError(
         "Cursor Agent CLI not found. Install with: "
@@ -523,30 +606,39 @@ def run_cursor_agent(ctx: Context, prompt: str, log_name: str) -> tuple[int, Pat
     if model:
         args += ["--model", model]
     args += ["--workspace", str(ctx.repo)]
-    args.append(prompt)
+    # Never pass the full prompt on argv: Windows CreateProcess limit ~8191 chars
+    # truncates transition prompts. Feed via stdin (agent reads it in -p mode).
 
     logs = ctx.repo / LOGS_REL
     logs.mkdir(parents=True, exist_ok=True)
-    log_path = logs / f"{log_name}-{stamp()}.log"
+    ts = stamp()
+    log_path = logs / f"{log_name}-{ts}.log"
+    prompt_path = logs / f"{log_name}-{ts}.prompt.md"
+    prompt_path.write_text(prompt, encoding="utf-8")
     timeout = int(ctx.config.get("agentTimeoutSeconds", 14400))
-    print(f"\n=== Cursor Agent ===\nLog: {log_path.relative_to(ctx.repo)}\n")
+    print(f"\n=== Cursor Agent ===\nLog: {log_path.relative_to(ctx.repo)}")
+    print(f"Prompt file: {prompt_path.relative_to(ctx.repo)} ({len(prompt)} chars via stdin)\n")
 
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    env.setdefault("LANG", "C.UTF-8")
     try:
         cp = subprocess.run(
             args,
             cwd=str(ctx.repo),
-            text=True,
+            input=prompt.encode("utf-8"),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             timeout=timeout,
-            env=os.environ.copy(),
+            env=env,
         )
-        log_path.write_text(cp.stdout or "", encoding="utf-8")
-        if cp.stdout:
-            print(cp.stdout[-5000:])
+        output = (cp.stdout or b"").decode("utf-8", errors="replace")
+        log_path.write_text(output, encoding="utf-8")
+        if output:
+            _safe_print(output[-5000:])
         return cp.returncode, log_path
     except subprocess.TimeoutExpired as exc:
-        output = exc.stdout or ""
+        output = exc.stdout or b""
         if isinstance(output, bytes):
             output = output.decode("utf-8", errors="replace")
         log_path.write_text(output + "\nTIMEOUT\n", encoding="utf-8")
@@ -696,7 +788,7 @@ def doctor(ctx: Context) -> int:
     print(
         "\nMODE: LOCAL_OVERNIGHT\n"
         "CLOUD_AUTOMATION: not configured (agent worker / cloud not verified)\n"
-        "CAN I TURN OFF THE PC? NO — keep powered on, awake, networked.\n"
+        "CAN I TURN OFF THE PC? NO - keep powered on, awake, networked.\n"
     )
     return 1 if failed else 0
 
@@ -705,7 +797,7 @@ def preflight(ctx: Context, *, for_overnight: bool = True) -> int:
     print("=== Preflight overnight ===\n")
     code = doctor(ctx)
     if code != 0 and for_overnight:
-        print("\nPREFLIGHT FAIL — resolve FAIL items before overnight.")
+        print("\nPREFLIGHT FAIL - resolve FAIL items before overnight.")
         return code
 
     # Require cursor auth for overnight
@@ -713,28 +805,39 @@ def preflight(ctx: Context, *, for_overnight: bool = True) -> int:
         cmd = resolve_cursor_command(ctx.config)
         ok, detail = cursor_auth_ok(cmd)
         if not ok:
-            print(f"\nPREFLIGHT FAIL — Cursor auth: {detail}")
+            print(f"\nPREFLIGHT FAIL - Cursor auth: {detail}")
             print("Run: agent login")
             return 1
     except OrchestratorError as exc:
-        print(f"\nPREFLIGHT FAIL — {exc}")
+        print(f"\nPREFLIGHT FAIL - {exc}")
         return 1
 
     dirty = git_dirty(ctx.repo)
     classes = classify_dirty(dirty)
-    if classes["other"] and not ctx.config.get("allowDirtyStart", False):
-        print("\nPREFLIGHT FAIL — unexpected dirty paths outside compliance automation:")
-        for line in classes["other"][:40]:
+    ignore_untracked = bool(ctx.config.get("preflightIgnoreUntrackedOther", True))
+    blocking_other = []
+    for line in classes["other"]:
+        untracked = line.startswith("??")
+        if untracked and ignore_untracked:
+            continue
+        blocking_other.append(line)
+    if blocking_other and not ctx.config.get("allowDirtyStart", False):
+        print("\nPREFLIGHT FAIL - tracked/unexpected dirty paths outside compliance automation:")
+        for line in blocking_other[:40]:
             print(" ", line)
-        print("Commit/stash unrelated work, or set allowDirtyStart only if understood.")
+        print("Commit/stash unrelated tracked work, or set allowDirtyStart only if understood.")
         return 1
+    warned_other = [l for l in classes["other"] if l.startswith("??")]
+    if warned_other:
+        print(f"\nPREFLIGHT WARN - {len(warned_other)} untracked path(s) outside compliance (ignored for start).")
+
 
     if ctx.lock_path.exists():
         try:
             acquire_lock(ctx)
             release_lock(ctx)
         except OrchestratorError as exc:
-            print(f"\nPREFLIGHT FAIL — {exc}")
+            print(f"\nPREFLIGHT FAIL - {exc}")
             return 1
 
     print("\nPREFLIGHT PASS")
@@ -967,6 +1070,73 @@ def _final_regression_checks(ctx: Context) -> bool:
     return True
 
 
+def deploy_production(ctx: Context) -> None:
+    """Deploy Compliance to VPS (compliance.wayfold.xyz)."""
+    if not ctx.config.get("autoDeploy", False):
+        print("autoDeploy disabled — skipping production deploy")
+        return
+    script = ctx.repo / APP_REL / "deploy" / "deploy-compliance.ps1"
+    if not script.exists():
+        raise OrchestratorError(f"Missing deploy script: {script}")
+    setup_tls = bool(ctx.config.get("autoDeploySetupTls", True))
+    args = [
+        "powershell",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(script),
+    ]
+    if setup_tls:
+        args.append("-SetupTls")
+    print(f"\n=== Production deploy ===\n{' '.join(args)}\n")
+    cp = subprocess.run(args, cwd=str(ctx.repo), text=True, capture_output=True)
+    log = (cp.stdout or "") + (cp.stderr or "")
+    logs = ctx.repo / LOGS_REL
+    logs.mkdir(parents=True, exist_ok=True)
+    (logs / f"deploy-{stamp()}.log").write_text(log, encoding="utf-8")
+    _safe_print(log[-4000:] if log else "")
+    if cp.returncode != 0:
+        raise OrchestratorError(f"Production deploy failed (exit {cp.returncode})")
+    # Prefer public URL; fall back to VPS localhost health via SSH
+    remote = str(ctx.config.get("deployRemote", "wayfold@167.233.121.159"))
+    public_ok = False
+    try:
+        import urllib.request
+        import ssl
+
+        url = str(ctx.config.get("productionUrl", "https://compliance.wayfold.xyz/api/health/"))
+        ctx_ssl = ssl.create_default_context()
+        with urllib.request.urlopen(url, timeout=30, context=ctx_ssl) as resp:  # noqa: S310
+            body = resp.read().decode("utf-8", errors="replace")
+            print(f"Production health: HTTP {resp.status} {body[:200]}")
+            public_ok = True
+    except Exception as exc:
+        print(f"Public HTTPS health not ready yet: {exc}")
+    if not public_ok:
+        cp = run_cmd(
+            [
+                "ssh",
+                "-o",
+                "BatchMode=yes",
+                remote,
+                "curl -fsS -H 'Host: localhost' http://127.0.0.1:18000/api/health/",
+            ],
+            ctx.repo,
+            timeout=60,
+        )
+        if cp.returncode != 0:
+            raise OrchestratorError(
+                "Deploy finished but neither public HTTPS nor VPS localhost health passed. "
+                "If Docker is up, run once: sudo bash /home/wayfold/apps/wayfold-compliance/deploy/setup-nginx-tls.sh"
+            )
+        print(f"VPS localhost health OK: {(cp.stdout or '').strip()}")
+        print(
+            "NOTE: Public TLS needs one root command on VPS "
+            "(passwordless sudo not available): "
+            "sudo bash /home/wayfold/apps/wayfold-compliance/deploy/setup-nginx-tls.sh"
+        )
+
+
 def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
     if not ctx.config.get("autoMergeMain", True):
         ctx.state["status"] = "HUMAN_REVIEW_REQUIRED"
@@ -982,10 +1152,11 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
     if dry:
         ctx.state = apply_complete(ctx.state)
         ctx.save_state()
-        append_report(ctx, f"## Merge\nPASS (dry-run)\n## origin/{main}\n(dry-run)\n## Final Status\nCOMPLETE\n")
+        append_report(ctx, f"## Merge\nPASS (dry-run)\n## Deploy\nSKIPPED (dry-run)\n## Final Status\nCOMPLETE\n")
         return "DONE"
 
-    # Ensure branch pushed + tags
+    # Checkpoint compliance work before leaving the branch
+    commit_changes(ctx, "chore(compliance): pre-merge checkpoint")
     try:
         push_branch(ctx)
         run_cmd(["git", "push", "origin", "--tags"], ctx.repo)
@@ -994,7 +1165,16 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
         ctx.save_state()
         return "STOP"
 
-    # Update local main
+    # Stash unrelated dirty paths so switch to main can succeed
+    dirty = git_dirty(ctx.repo)
+    stashed = False
+    if dirty:
+        cp = run_cmd(
+            ["git", "stash", "push", "-u", "-m", "wayfold-compliance-pre-merge-stash"],
+            ctx.repo,
+        )
+        stashed = cp.returncode == 0
+
     cp = run_cmd(["git", "fetch", "origin", main], ctx.repo)
     if cp.returncode != 0:
         ctx.state = apply_blocked(ctx.state, [{"severity": "BLOCKING", "description": f"fetch {main} failed"}])
@@ -1005,7 +1185,12 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
     if cp.returncode != 0:
         cp = run_cmd(["git", "checkout", main], ctx.repo)
     if cp.returncode != 0:
-        ctx.state = apply_blocked(ctx.state, [{"severity": "BLOCKING", "description": f"cannot switch to {main}"}])
+        if stashed:
+            run_cmd(["git", "stash", "pop"], ctx.repo)
+        ctx.state = apply_blocked(
+            ctx.state,
+            [{"severity": "BLOCKING", "description": f"cannot switch to {main}: {(cp.stderr or cp.stdout)[:300]}"}],
+        )
         ctx.save_state()
         return "STOP"
 
@@ -1013,13 +1198,17 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
     if cp.returncode != 0:
         print("ff-only pull failed; continuing with merge attempt")
 
-    cp = run_cmd(["git", "merge", "--no-ff", branch, "-m", f"merge: wayfold compliance automation ({branch})"], ctx.repo)
+    cp = run_cmd(
+        ["git", "merge", "--no-ff", branch, "-m", f"merge: wayfold compliance automation ({branch})"],
+        ctx.repo,
+    )
     if cp.returncode != 0:
         run_cmd(["git", "merge", "--abort"], ctx.repo)
         ctx.state = apply_merge_conflict(ctx.state, cp.stderr or cp.stdout or "merge failed")
         ctx.save_state()
-        # Return to automation branch
         run_cmd(["git", "switch", branch], ctx.repo)
+        if stashed:
+            run_cmd(["git", "stash", "pop"], ctx.repo)
         commit_changes(ctx, "chore(compliance): merge conflict requires human review")
         try:
             push_branch(ctx)
@@ -1027,7 +1216,6 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
             pass
         return "STOP"
 
-    # Post-merge checks on main
     if not _final_regression_checks(ctx):
         ctx.state["status"] = "HUMAN_REVIEW_REQUIRED"
         ctx.state["blockingIssues"] = [{"severity": "BLOCKING", "description": "Post-merge checks failed"}]
@@ -1043,28 +1231,49 @@ def merge_to_main(ctx: Context, *, dry: bool = False) -> str:
 
     remote_main = run_cmd(["git", "rev-parse", f"origin/{main}"], ctx.repo).stdout.strip()
     local_main = git_head(ctx.repo)
+
+    deploy_status = "SKIPPED"
+    if ctx.config.get("autoDeploy", False):
+        try:
+            deploy_production(ctx)
+            deploy_status = "PASS"
+        except OrchestratorError as exc:
+            ctx.state["status"] = "HUMAN_REVIEW_REQUIRED"
+            ctx.state["blockingIssues"] = [{"severity": "BLOCKING", "description": str(exc)}]
+            ctx.state["lastError"] = str(exc)
+            ctx.save_state()
+            append_report(
+                ctx,
+                f"## Merge\nPASS\n## Deploy\nFAIL\n{exc}\nStatus: HUMAN_REVIEW_REQUIRED\n",
+            )
+            commit_changes(ctx, "chore(compliance): deploy failed after merge")
+            run_cmd(["git", "push", "origin", main], ctx.repo)
+            return "STOP"
+
     ctx.state = apply_complete(ctx.state)
     ctx.save_state()
-    # Switch back note: state lives on compliance paths; commit on main
     commit_changes(ctx, "chore(compliance): mark automation COMPLETE")
     run_cmd(["git", "push", "origin", main], ctx.repo)
     append_report(
         ctx,
-        f"## Merge\nPASS\n## origin/{main}\n{remote_main or local_main}\n## Final Status\nCOMPLETE\n",
+        f"## Merge\nPASS\n## Deploy\n{deploy_status}\n## origin/{main}\n{remote_main or local_main}\n"
+        f"## Production\nhttps://compliance.wayfold.xyz\n## Final Status\nCOMPLETE\n",
     )
-    # Push report if committed on main
     run_cmd(["git", "push", "origin", main], ctx.repo)
-    print(f"COMPLETE — origin/{main}={local_main}")
+    if stashed:
+        run_cmd(["git", "stash", "pop"], ctx.repo)
+    print(f"COMPLETE - origin/{main}={local_main} deploy={deploy_status}")
     return "DONE"
 
 
 def overnight(ctx: Context, *, dry: bool = False) -> int:
     acquire_lock(ctx)
+    ensure_no_nested_git(ctx)
     interrupted = {"flag": False}
 
     def _handle_sig(signum, frame):  # type: ignore[no-untyped-def]
         interrupted["flag"] = True
-        print("\nInterrupt received — saving INTERRUPTED state...")
+        print("\nInterrupt received - saving INTERRUPTED state...")
         ctx.state = apply_interrupted(ctx.state)
         ctx.save_state()
 
@@ -1093,6 +1302,33 @@ def overnight(ctx: Context, *, dry: bool = False) -> int:
             if interrupted["flag"]:
                 return 130
             status = ctx.state.get("status")
+            if status == "DEPLOY_RETRY":
+                # Merge already landed; retry production deploy only
+                ctx.state["status"] = "MERGING"
+                ctx.save_state()
+                try:
+                    deploy_production(ctx)
+                except OrchestratorError as exc:
+                    ctx.state["status"] = "HUMAN_REVIEW_REQUIRED"
+                    ctx.state["blockingIssues"] = [{"severity": "BLOCKING", "description": str(exc)}]
+                    ctx.state["lastError"] = str(exc)
+                    ctx.save_state()
+                    append_report(ctx, f"## Deploy retry\nFAIL\n{exc}\nStatus: HUMAN_REVIEW_REQUIRED\n")
+                    commit_changes(ctx, "chore(compliance): deploy retry failed")
+                    run_cmd(["git", "push", "origin", str(ctx.config.get("mainBranch", "main"))], ctx.repo)
+                    return 2
+                ctx.state = apply_complete(ctx.state)
+                ctx.save_state()
+                commit_changes(ctx, "chore(compliance): mark automation COMPLETE")
+                run_cmd(["git", "push", "origin", str(ctx.config.get("mainBranch", "main"))], ctx.repo)
+                append_report(
+                    ctx,
+                    "## Deploy retry\nPASS\n## Production\nhttps://compliance.wayfold.xyz\n## Final Status\nCOMPLETE\n",
+                )
+                run_cmd(["git", "push", "origin", str(ctx.config.get("mainBranch", "main"))], ctx.repo)
+                print("COMPLETE after deploy retry")
+                return 0
+
             if status == "FINAL_REGRESSION":
                 action = run_final_regression(ctx)
                 if action == "MERGE":
@@ -1153,9 +1389,9 @@ def _dry_run_suite(ctx: Context) -> int:
     assert state["status"] == "MERGING"
     state = apply_complete(state)
     assert state["status"] == "COMPLETE"
-    print("[PASS] happy path + phase3 fix → COMPLETE")
+    print("[PASS] happy path + phase3 fix -> COMPLETE")
 
-    # Triple fail → HUMAN_REVIEW
+    # Triple fail -> HUMAN_REVIEW
     state = deepcopy_state(base)
     state["nextTransition"] = "3_TO_4"
     state["lastClosedPhase"] = 2
@@ -1163,33 +1399,33 @@ def _dry_run_suite(ctx: Context) -> int:
     for _ in range(3):
         state = apply_verification_fail(state, [{"severity": "BLOCKING", "description": "x"}])
     assert state["status"] == "HUMAN_REVIEW_REQUIRED"
-    print("[PASS] 3x FAIL → HUMAN_REVIEW_REQUIRED")
+    print("[PASS] 3x FAIL -> HUMAN_REVIEW_REQUIRED")
 
     # Push failure
     state = deepcopy_state(base)
     state = apply_push_failure(state, "simulated")
     assert state["status"] == "HUMAN_REVIEW_REQUIRED"
-    print("[PASS] push failure → STOP")
+    print("[PASS] push failure -> STOP")
 
-    # Final regression fail → no merge
+    # Final regression fail -> no merge
     state = deepcopy_state(base)
     state = apply_pass_transition(state, "CLOSE_6")
     state = apply_final_regression_fail(state, 3, 3)
     assert state["status"] == "HUMAN_REVIEW_REQUIRED"
     assert state.get("nextTransition") is None
-    print("[PASS] final regression FAIL → no merge")
+    print("[PASS] final regression FAIL -> no merge")
 
     # Invalid JSON
     state = deepcopy_state(base)
     state = apply_invalid_result(state, "not json")
     assert state["status"] == "HUMAN_REVIEW_REQUIRED"
-    print("[PASS] invalid JSON → safe stop")
+    print("[PASS] invalid JSON -> safe stop")
 
     # Merge conflict
     state = deepcopy_state(base)
     state = apply_merge_conflict(state, "conflict")
     assert state["status"] == "HUMAN_REVIEW_REQUIRED"
-    print("[PASS] merge conflict → safe stop")
+    print("[PASS] merge conflict -> safe stop")
 
     # Interruption recoverable
     state = deepcopy_state(base)
@@ -1198,7 +1434,7 @@ def _dry_run_suite(ctx: Context) -> int:
     assert state["status"] == "INTERRUPTED"
     state = resume_status(state)
     assert state["status"] == "READY"
-    print("[PASS] interruption → recoverable")
+    print("[PASS] interruption -> recoverable")
 
     # Stale lock handling tested indirectly via acquire; unit test covers pid
     print("\nDRY RUN COMPLETE")
@@ -1253,13 +1489,13 @@ def cmd_status(ctx: Context) -> None:
     if ctx.state.get("status") == "COMPLETE":
         next_action = "NONE (COMPLETE)"
     elif ctx.state.get("status") == "HUMAN_REVIEW_REQUIRED":
-        next_action = "Human fix → reset/resume overnight"
+        next_action = "Human fix -> reset/resume overnight"
     elif ctx.state.get("status") == "FINAL_REGRESSION":
-        next_action = "Final regression → merge main"
+        next_action = "Final regression -> merge main"
     elif nxt:
         meta = TRANSITIONS[nxt]
         next_action = f"VERIFY Phase {meta['verify']}" + (
-            f" → DEVELOP Phase {meta['develop']}" if meta["develop"] else " → FINAL REGRESSION"
+            f" -> DEVELOP Phase {meta['develop']}" if meta["develop"] else " -> FINAL REGRESSION"
         )
     else:
         next_action = "Inspect state"

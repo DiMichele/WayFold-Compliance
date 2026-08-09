@@ -1,0 +1,12 @@
+{
+  "programs": [
+    {
+      "snapshot": "michele_phase2_program.json",
+      "last_activity": "2026-08-08"
+    },
+    {
+      "snapshot": "alfa_phase3_program.json",
+      "last_activity": "2026-08-07"
+    }
+  ]
+}

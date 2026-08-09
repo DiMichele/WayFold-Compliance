@@ -2,27 +2,37 @@
 
 Applicativo privato GRC multi-framework per consulenza cybersecurity.
 
-- Dominio previsto: `compliance.wayfold.xyz`
-- Repository: [DiMichele/WayFold-Compliance](https://github.com/DiMichele/WayFold-Compliance)
-- Stato: **Phase -1 / Phase 0 COMPLETE** — core selezionato, demo Michele PASS
-- Raccomandazione: [`docs/PHASE0-RECOMMENDATION.md`](docs/PHASE0-RECOMMENDATION.md)
-- Progress: [`docs/PROGRESS.md`](docs/PROGRESS.md)
+| | |
+|---|---|
+| Live | https://compliance.wayfold.xyz/ |
+| Repository | https://github.com/DiMichele/WayFold-Compliance |
+| Product realignment report | [docs/review/PRODUCT-REALIGNMENT.md](docs/review/PRODUCT-REALIGNMENT.md) |
+| Review URL manifest | [docs/review/FINAL-REVIEW-URLS.md](docs/review/FINAL-REVIEW-URLS.md) |
+| Screenshots | [docs/review/realign/](docs/review/realign/) · [docs/review/final/](docs/review/final/) |
 
-## Decisione Phase 0
+## Stato
 
-- **Core:** CISO Assistant Community
-- **Strategy B:** GRC Core + Wayfold Regulatory Engine (servizi esterni via API)
+**Product realignment COMPLETE** — Knowledge Base authoring end-to-end dalla UI  
+(CREATE → MAP → PUBLISH → ASSIGN → ASSESS)
+
+- READY FOR EXTERNAL REVIEW: **YES**
+- READY FOR REAL CLIENT DATA: **NO** (temporary review credential + MFA pending)
 
 ## Layout
 
-```text
+```
 .
-  docs/         stato, decisioni, evaluation, architecture, recommendation
-  automation/   orchestratore fasi (overnight)
-  prompts/      prompt Cursor per fasi 1–6
-  vendor/       clone OSS (gitignored) — solo macchina locale
+  docs/         decisioni, architecture, review pack, acceptance
+  engine/       WayFold Compliance engine (UI + API + overlay stores)
+  deploy/       Docker / nginx / sync VPS
+  automation/   orchestratore fasi
+  prompts/      prompt Cursor storici fasi 1–6
 ```
 
-## Avvio core locale (post Phase 0)
+## Avvio locale
 
-Vedi comandi in `docs/PROGRESS.md`.
+Vedi `docs/PROGRESS.md` e `docs/deployment.md`.
+
+## Deployed SHA (VPS sync)
+
+`dab74ce204fcbfffa6e58a6d4942f1f27c0e1feb`

@@ -1,0 +1,60 @@
+[
+  {
+    "CheckID": "iam_root_mfa_enabled",
+    "CheckTitle": "Ensure MFA is enabled for the root account",
+    "Status": "PASS",
+    "Severity": "critical",
+    "Provider": "aws",
+    "Region": "us-east-1",
+    "ResourceId": "arn:aws:iam::123456789012:root",
+    "ResourceName": "root",
+    "StatusExtended": "MFA device enabled for root account.",
+    "Timestamp": "2026-08-09T00:10:00+00:00",
+    "Remediation": {
+      "Recommendation": {
+        "Text": "Enable a virtual or hardware MFA device for the root user."
+      }
+    }
+  },
+  {
+    "CheckID": "iam_password_policy_minimum_length",
+    "CheckTitle": "Ensure IAM password policy requires minimum length of 14",
+    "Status": "FAIL",
+    "Severity": "medium",
+    "Provider": "aws",
+    "Region": "us-east-1",
+    "ResourceId": "arn:aws:iam::123456789012:account",
+    "ResourceName": "account-password-policy",
+    "StatusExtended": "Password policy minimum length is 8 (expected >= 14).",
+    "Timestamp": "2026-08-09T00:10:00+00:00",
+    "Remediation": {
+      "Recommendation": {
+        "Text": "Update account password policy MinimumPasswordLength to at least 14."
+      }
+    }
+  },
+  {
+    "CheckID": "cloudtrail_multi_region_enabled",
+    "CheckTitle": "Ensure CloudTrail is enabled in all regions",
+    "Status": "PASS",
+    "Severity": "high",
+    "Provider": "aws",
+    "Region": "us-east-1",
+    "ResourceId": "arn:aws:cloudtrail:us-east-1:123456789012:trail/main",
+    "ResourceName": "main",
+    "StatusExtended": "Multi-region CloudTrail trail is enabled.",
+    "Timestamp": "2026-08-09T00:10:00+00:00"
+  },
+  {
+    "CheckID": "unmapped_example_s3_public",
+    "CheckTitle": "Ensure S3 buckets are not publicly accessible",
+    "Status": "FAIL",
+    "Severity": "high",
+    "Provider": "aws",
+    "Region": "eu-west-1",
+    "ResourceId": "arn:aws:s3:::demo-bucket",
+    "ResourceName": "demo-bucket",
+    "StatusExtended": "Bucket allows public ACL read.",
+    "Timestamp": "2026-08-09T00:10:00+00:00"
+  }
+]

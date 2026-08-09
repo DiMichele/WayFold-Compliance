@@ -1,0 +1,128 @@
+{
+  "tenant_id": "tenant-alfa",
+  "tenant_name": "Cliente Alfa",
+  "program_id": "program-alfa-cloud",
+  "program_name": "Cloud Compliance Alfa",
+  "requirements": [
+    {
+      "id": "alfa-req-01",
+      "framework_id": "fw-iso",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022.1",
+      "code": "A.8.1",
+      "title": "User endpoint devices",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "alfa-req-02",
+      "framework_id": "fw-iso",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022.1",
+      "code": "A.8.15",
+      "title": "Logging",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "alfa-req-03",
+      "framework_id": "fw-nis2",
+      "framework_name": "NIS2",
+      "framework_version": "2026.1",
+      "code": "NIS2-LOG",
+      "title": "Logging and monitoring",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "alfa-req-99",
+      "framework_id": "fw-nis2",
+      "framework_name": "NIS2",
+      "framework_version": "2026.1",
+      "code": "NIS2-SUPPLY",
+      "title": "Supply-chain security clause",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "alfa-impl-epm",
+      "ref_id": "CTRL-EPM-001",
+      "name": "Endpoint management baseline",
+      "canonical_control_id": "canon-epm-001",
+      "canonical_control_ref": "CTRL-EPM-001",
+      "status": "IN_PROGRESS",
+      "owner": "ops@alfa.example",
+      "due_date": "2026-08-01",
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 2,
+      "folder_id": "tenant-alfa"
+    },
+    {
+      "id": "alfa-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "Central logging",
+      "canonical_control_id": "canon-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IMPLEMENTED",
+      "owner": "sec@alfa.example",
+      "due_date": "2026-09-15",
+      "priority": "MEDIUM",
+      "evidence_count": 2,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa"
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "alfa-req-01",
+      "framework_id": "fw-iso",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022.1",
+      "requirement_code": "A.8.1",
+      "canonical_control_id": "canon-epm-001",
+      "canonical_control_ref": "CTRL-EPM-001",
+      "relation": "FULL",
+      "rationale": "EPM covers endpoint device controls",
+      "uncovered_delta": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "alfa-req-02",
+      "framework_id": "fw-iso",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022.1",
+      "requirement_code": "A.8.15",
+      "canonical_control_id": "canon-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "PARTIAL",
+      "rationale": "Central logging covers retention partially",
+      "uncovered_delta": "ISO requires 12-month immutable retention; current retention is 90 days",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "alfa-req-03",
+      "framework_id": "fw-nis2",
+      "framework_name": "NIS2",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-LOG",
+      "canonical_control_id": "canon-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "NIS2 logging satisfied by central logging",
+      "uncovered_delta": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "alfa-req-01": ["alfa-impl-epm"],
+    "alfa-req-02": ["alfa-impl-log"],
+    "alfa-req-03": ["alfa-impl-log"]
+  }
+}

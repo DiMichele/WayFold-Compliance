@@ -1,0 +1,375 @@
+{
+  "tenant_id": "tenant-nova-demo",
+  "tenant_name": "Nova Health S.r.l. [Demo]",
+  "program_id": "program-nova-ai-2026",
+  "program_name": "AI Governance & Security 2026",
+  "scope": "AI systems in ambito sanitario (demo)",
+  "program_status": "ACTIVE",
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "requirements": [
+    {
+      "id": "n-ai-01",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "code": "AIA-01",
+      "title": "Risk management system",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "n-ai-02",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "code": "AIA-02",
+      "title": "Human oversight / access",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "n-ai-03",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "code": "AIA-03",
+      "title": "Logging of high-risk AI",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "n-420-01",
+      "framework_id": "fw-iso42001-2023",
+      "framework_name": "ISO/IEC 42001",
+      "framework_version": "2023",
+      "code": "42001-5.2",
+      "title": "AI policy",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "n-420-02",
+      "framework_id": "fw-iso42001-2023",
+      "framework_name": "ISO/IEC 42001",
+      "framework_version": "2023",
+      "code": "42001-8.2",
+      "title": "AI risk assessment",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "n-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-01",
+      "title": "Privileged access",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "n-nis2-03",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-03",
+      "title": "Supply chain",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "n-impl-gov",
+      "ref_id": "CTRL-GOV-001",
+      "name": "AI risk governance",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "status": "IMPLEMENTED",
+      "owner": "AI Lead Nova",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 2,
+      "open_task_count": 0,
+      "folder_id": "tenant-nova-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "n-impl-iam",
+      "ref_id": "CTRL-IAM-001",
+      "name": "Accesso modelli AI",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "IN_PROGRESS",
+      "owner": "Sec Nova",
+      "due_date": "2026-08-30",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-nova-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "n-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "Logging decisioni AI",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IN_PROGRESS",
+      "owner": "Sec Nova",
+      "due_date": "2026-09-10",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-nova-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "n-impl-ir",
+      "ref_id": "CTRL-IR-001",
+      "name": "Incident AI security",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Nova",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-nova-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "n-impl-sup",
+      "ref_id": "CTRL-SUP-001",
+      "name": "Fornitori modelli",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "Proc Nova",
+      "due_date": "2026-09-05",
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-nova-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "n-ai-01",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "requirement_code": "AIA-01",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-GOV-001 copre il requisito AIA-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-ai-02",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "requirement_code": "AIA-02",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito AIA-02 nel perimetro del programma.",
+      "uncovered_delta": "Manca matrice oversight per modelli high-risk",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-ai-03",
+      "framework_id": "fw-aiact-2026",
+      "framework_name": "AI Act",
+      "framework_version": "2026.1",
+      "requirement_code": "AIA-03",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito AIA-03 nel perimetro del programma.",
+      "uncovered_delta": "Retention logging AI non allineata",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-420-01",
+      "framework_id": "fw-iso42001-2023",
+      "framework_name": "ISO/IEC 42001",
+      "framework_version": "2023",
+      "requirement_code": "42001-5.2",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-GOV-001 copre il requisito 42001-5.2 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-420-02",
+      "framework_id": "fw-iso42001-2023",
+      "framework_name": "ISO/IEC 42001",
+      "framework_version": "2023",
+      "requirement_code": "42001-8.2",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-GOV-001 copre il requisito 42001-8.2 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito NIS2-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "n-nis2-03",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-03",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-SUP-001 copre il requisito NIS2-03 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "n-ai-01": [
+      "n-impl-gov"
+    ],
+    "n-ai-02": [
+      "n-impl-iam"
+    ],
+    "n-ai-03": [
+      "n-impl-log"
+    ],
+    "n-420-01": [
+      "n-impl-gov"
+    ],
+    "n-420-02": [
+      "n-impl-gov"
+    ],
+    "n-nis2-01": [
+      "n-impl-iam"
+    ],
+    "n-nis2-03": [
+      "n-impl-sup"
+    ]
+  },
+  "evidences": [
+    {
+      "id": "N-EV-001",
+      "title": "AI Policy Pack",
+      "filename": "AI Policy Pack.pdf",
+      "control_refs": [
+        "CTRL-GOV-001"
+      ],
+      "status": "VALID",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "N-EV-002",
+      "title": "Model Access Matrix",
+      "filename": "Model Access Matrix.xlsx",
+      "control_refs": [
+        "CTRL-IAM-001"
+      ],
+      "status": "PARTIAL",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "N-EV-003",
+      "title": "AI Logging Spec",
+      "filename": "AI Logging Spec.pdf",
+      "control_refs": [
+        "CTRL-LOG-001"
+      ],
+      "status": "VALID",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "N-TASK-001",
+      "title": "Completare oversight accessi modelli",
+      "control_ref": "CTRL-IAM-001",
+      "owner": "Sec Nova",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-30",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "N-TASK-002",
+      "title": "Allineare retention log AI",
+      "control_ref": "CTRL-LOG-001",
+      "owner": "Sec Nova",
+      "status": "TODO",
+      "due_date": "2026-09-10",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "N-TASK-003",
+      "title": "Due diligence fornitori modelli",
+      "control_ref": "CTRL-SUP-001",
+      "owner": "Proc Nova",
+      "status": "TODO",
+      "due_date": "2026-09-05",
+      "priority": "HIGH",
+      "notes": ""
+    }
+  ],
+  "available_framework_versions": []
+}

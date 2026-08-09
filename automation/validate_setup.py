@@ -39,11 +39,11 @@ def main() -> int:
         "autoPush",
         "autoTag",
         "autoMergeMain",
+        "autoDeploy",
     ):
         if key not in config:
             errors.append(f"config missing {key}")
-    if config.get("autoDeploy"):
-        errors.append("autoDeploy must not be enabled")
+
 
     for name, meta in TRANSITIONS.items():
         p = ROOT / meta["prompt"]

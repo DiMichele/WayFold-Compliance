@@ -13,6 +13,7 @@ VALID_STATUSES = {
     "BLOCKED",
     "HUMAN_REVIEW_REQUIRED",
     "FINAL_REGRESSION",
+    "DEPLOY_RETRY",
     "MERGING",
     "COMPLETE",
     "INTERRUPTED",
@@ -87,7 +88,7 @@ def default_state() -> dict[str, Any]:
         "history": [],
         "notes": (
             "Phase 0 closed via docs/decisions. Automation starts at VERIFY Phase 1 "
-            "→ DEVELOP Phase 2. Do not claim Phase 1 COMPLETE until independent PASS."
+            "-> DEVELOP Phase 2. Do not claim Phase 1 COMPLETE until independent PASS."
         ),
     }
 
@@ -271,4 +272,19 @@ def resume_status(state: dict[str, Any]) -> dict[str, Any]:
     if out.get("status") in {"INTERRUPTED", "FIXING", "VERIFYING", "DEVELOPING", "AWAITING_VERIFICATION"}:
         if out.get("nextTransition") or out.get("status") == "FIXING":
             out["status"] = "READY"
+    # Recover merge/deploy after Phase 6 closed but merge was blocked (dirty tree, etc.)
+    if (
+        out.get("status") in {"BLOCKED", "HUMAN_REVIEW_REQUIRED", "MERGING"}
+        and int(out.get("lastClosedPhase", -1)) >= 6
+        and out.get("nextTransition") is None
+        and any(h.get("event") == "FINAL_REGRESSION_PASS" for h in (out.get("history") or []))
+    ):
+        # Deploy-only retry when merge already succeeded earlier
+        issues = out.get("blockingIssues") or []
+        deploy_failed = any(
+            "deploy" in str(i.get("description", "")).lower() for i in issues if isinstance(i, dict)
+        )
+        out["status"] = "DEPLOY_RETRY" if deploy_failed else "FINAL_REGRESSION"
+        out["blockingIssues"] = []
+        out["lastError"] = None
     return out

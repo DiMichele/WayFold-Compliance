@@ -1,0 +1,366 @@
+{
+  "tenant_id": "tenant-alfa-demo",
+  "tenant_name": "Alfa Cloud S.p.A. [Demo]",
+  "program_id": "program-alfa-cloud-2026",
+  "program_name": "Cloud Qualification 2026",
+  "scope": "Public cloud qualification",
+  "program_status": "ACTIVE",
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "requirements": [
+    {
+      "id": "a-qc4-01",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "code": "QC4-01",
+      "title": "Identity federation",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "a-qc4-02",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "code": "QC4-02",
+      "title": "Logging & monitoring",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "a-qc4-03",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "code": "QC4-03",
+      "title": "Encryption baseline",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "a-qc4-99",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "code": "QC4-99",
+      "title": "Sector residual clause",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "a-iso-01",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.15",
+      "title": "Access control",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "a-iso-02",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.8.15",
+      "title": "Logging",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "a-iso-03",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.24",
+      "title": "Incidents",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "a-impl-iam",
+      "ref_id": "CTRL-IAM-001",
+      "name": "Gestione accessi cloud",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "IMPLEMENTED",
+      "owner": "Ops Alfa",
+      "due_date": null,
+      "priority": "HIGH",
+      "evidence_count": 2,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "a-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "Logging cloud",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Alfa",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 2,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "a-impl-enc",
+      "ref_id": "CTRL-ENC-001",
+      "name": "Crittografia at-rest",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Alfa",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "a-impl-ir",
+      "ref_id": "CTRL-IR-001",
+      "name": "Incident cloud",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sec Alfa",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "a-impl-gov",
+      "ref_id": "CTRL-GOV-001",
+      "name": "Governance cloud",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "status": "IN_PROGRESS",
+      "owner": "CISO Alfa",
+      "due_date": "2026-08-28",
+      "priority": "HIGH",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "a-impl-sup",
+      "ref_id": "CTRL-SUP-001",
+      "name": "Fornitori cloud",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "status": "IMPLEMENTED",
+      "owner": "Proc Alfa",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-alfa-demo",
+      "description": "",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "a-qc4-01",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "requirement_code": "QC4-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito QC4-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "a-qc4-02",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "requirement_code": "QC4-02",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito QC4-02 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "a-qc4-03",
+      "framework_id": "fw-qc4-2025",
+      "framework_name": "QC4 / Cloud Regulation",
+      "framework_version": "2025.1",
+      "requirement_code": "QC4-03",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-ENC-001 copre il requisito QC4-03 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "a-iso-01",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.15",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito ISO-A.5.15 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "a-iso-02",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.8.15",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito ISO-A.8.15 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "a-iso-03",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.24",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito ISO-A.5.24 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "a-qc4-01": [
+      "a-impl-iam"
+    ],
+    "a-qc4-02": [
+      "a-impl-log"
+    ],
+    "a-qc4-03": [
+      "a-impl-enc"
+    ],
+    "a-iso-01": [
+      "a-impl-iam"
+    ],
+    "a-iso-02": [
+      "a-impl-log"
+    ],
+    "a-iso-03": [
+      "a-impl-ir"
+    ]
+  },
+  "evidences": [
+    {
+      "id": "A-EV-001",
+      "title": "Cloud IAM Design",
+      "filename": "Cloud IAM Design.pdf",
+      "control_refs": [
+        "CTRL-IAM-001"
+      ],
+      "status": "VALID",
+      "valid_until": "2027-06-01",
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "A-EV-002",
+      "title": "SIEM Pack",
+      "filename": "SIEM Pack.pdf",
+      "control_refs": [
+        "CTRL-LOG-001"
+      ],
+      "status": "REVIEW_REQUIRED",
+      "valid_until": null,
+      "review_by": "2026-08-20",
+      "notes": ""
+    },
+    {
+      "id": "A-EV-003",
+      "title": "Encryption Standard",
+      "filename": "Encryption Standard.pdf",
+      "control_refs": [
+        "CTRL-ENC-001"
+      ],
+      "status": "VALID",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "A-TASK-001",
+      "title": "Chiudere gap governance cloud",
+      "control_ref": "CTRL-GOV-001",
+      "owner": "CISO Alfa",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-28",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "A-TASK-002",
+      "title": "Revisionare evidenza SIEM",
+      "control_ref": "CTRL-LOG-001",
+      "owner": "Sec Alfa",
+      "status": "REVIEW",
+      "due_date": "2026-08-20",
+      "priority": "MEDIUM",
+      "notes": ""
+    }
+  ],
+  "available_framework_versions": []
+}

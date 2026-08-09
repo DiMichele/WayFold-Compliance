@@ -1,0 +1,900 @@
+{
+  "tenant_id": "tenant-michele-demo",
+  "tenant_name": "Michele S.r.l. [Demo]",
+  "program_id": "program-michele-cyber-2026",
+  "program_name": "Cyber Compliance 2026",
+  "scope": "Corporate IT + servizi critici",
+  "program_status": "ACTIVE",
+  "dataset_marker": "WF_REVIEW_DEMO_2026",
+  "seed_version": "2026.08.09-review-1",
+  "requirements": [
+    {
+      "id": "m-iso-a515",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.15",
+      "title": "Principi di controllo degli accessi",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-iso-a518",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.18",
+      "title": "Revisione dei diritti di accesso",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-iso-a524",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.24",
+      "title": "Gestione degli incidenti di sicurezza",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "m-iso-a519",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.5.19",
+      "title": "Sicurezza nei rapporti con i fornitori",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "m-iso-a815",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.8.15",
+      "title": "Logging delle attività",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-iso-a88",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "ISO-A.8.8",
+      "title": "Gestione delle vulnerabilità tecniche",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_applicable"
+    },
+    {
+      "id": "m-iso-iam-parent",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "IAM",
+      "title": "Identity and Access Management",
+      "assessable": false,
+      "is_leaf": false,
+      "result": null
+    },
+    {
+      "id": "m-iso-iam-1",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "code": "IAM.1",
+      "title": "Privileged access domain",
+      "assessable": false,
+      "is_leaf": false,
+      "result": null
+    },
+    {
+      "id": "m-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-01",
+      "title": "Governance degli accessi privilegiati",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-nis2-02",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-02",
+      "title": "Gestione e classificazione degli incidenti",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-nis2-03",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-03",
+      "title": "Sicurezza della supply chain",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "m-nis2-04",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-04",
+      "title": "Continuità operativa",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "m-nis2-05",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-05",
+      "title": "Risk management cyber",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "m-nis2-06",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "code": "NIS2-06",
+      "title": "Gestione delle vulnerabilità",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_applicable"
+    },
+    {
+      "id": "m-psnc-01",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-01",
+      "title": "Revisione periodica degli accessi privilegiati sui sistemi critici",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-psnc-02",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-02",
+      "title": "Logging e conservazione degli eventi",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-psnc-03",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-03",
+      "title": "Gestione degli incidenti critici",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "compliant"
+    },
+    {
+      "id": "m-psnc-04",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-04",
+      "title": "Test periodici di continuità sui sistemi critici",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "partially_compliant"
+    },
+    {
+      "id": "m-psnc-05",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-05",
+      "title": "Protezione crittografica delle informazioni critiche",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "non_compliant"
+    },
+    {
+      "id": "m-psnc-06",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-06",
+      "title": "Requisito operativo specifico non ancora mappato",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    },
+    {
+      "id": "m-psnc-sup",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "code": "PSNC-SUP",
+      "title": "Clausole di sicurezza supply chain (supporto)",
+      "assessable": true,
+      "is_leaf": true,
+      "result": "not_assessed"
+    }
+  ],
+  "implementations": [
+    {
+      "id": "m-impl-iam",
+      "ref_id": "CTRL-IAM-001",
+      "name": "Gestione degli accessi privilegiati",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "status": "IN_PROGRESS",
+      "owner": "Luca Rinaldi",
+      "due_date": "2026-08-07",
+      "priority": "HIGH",
+      "evidence_count": 3,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "PAM centralizzato per gli account amministrativi di dominio e per le principali piattaforme cloud. MFA attiva. È in corso la formalizzazione della recertificazione trimestrale sugli asset critici.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-ir",
+      "ref_id": "CTRL-IR-001",
+      "name": "Classificazione e gestione degli incidenti",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "status": "IMPLEMENTED",
+      "owner": "Sara Moretti",
+      "due_date": null,
+      "priority": "HIGH",
+      "evidence_count": 2,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "Processo di incident management formalizzato, con classificazione della severità, escalation interna e registro degli incidenti.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-sup",
+      "ref_id": "CTRL-SUP-001",
+      "name": "Due diligence di sicurezza dei fornitori",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "Sara Bianchi",
+      "due_date": "2026-08-18",
+      "priority": "HIGH",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "Sono presenti clausole contrattuali di sicurezza, ma non esiste ancora una procedura uniforme di due diligence periodica per i fornitori critici.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-bcp",
+      "ref_id": "CTRL-BCP-001",
+      "name": "Test di continuità operativa",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "status": "IMPLEMENTED",
+      "owner": "Marco Conti",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "Business Continuity Plan formalizzato e testato annualmente. Rimane da includere uno scenario specifico per alcuni sistemi critici.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-log",
+      "ref_id": "CTRL-LOG-001",
+      "name": "Logging e monitoraggio centralizzato",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "status": "IN_PROGRESS",
+      "owner": "Luca Rinaldi",
+      "due_date": "2026-08-25",
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "SIEM centralizzato in corso di allineamento retention.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-gov",
+      "ref_id": "CTRL-GOV-001",
+      "name": "Governance del rischio cyber",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "status": "IMPLEMENTED",
+      "owner": "Michele Ferri",
+      "due_date": null,
+      "priority": "MEDIUM",
+      "evidence_count": 1,
+      "open_task_count": 0,
+      "folder_id": "tenant-michele-demo",
+      "description": "Comitato rischio cyber e policy di governance aggiornate.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    },
+    {
+      "id": "m-impl-vuln",
+      "ref_id": "CTRL-VULN-001",
+      "name": "Gestione delle vulnerabilità",
+      "canonical_control_id": "canon-ctrl-vuln-001",
+      "canonical_control_ref": "CTRL-VULN-001",
+      "status": "NOT_APPLICABLE",
+      "owner": "Luca Rinaldi",
+      "due_date": null,
+      "priority": "LOW",
+      "evidence_count": 0,
+      "open_task_count": 0,
+      "folder_id": "tenant-michele-demo",
+      "description": "Escluso dallo scope dimostrativo.",
+      "not_applicable_rationale": "Il controllo tecnico specifico è fuori dal perimetro del programma dimostrativo per il sistema legacy escluso dallo scope.",
+      "not_applicable_approved_by": "admin",
+      "not_applicable_approved_at": "2026-08-09"
+    },
+    {
+      "id": "m-impl-enc",
+      "ref_id": "CTRL-ENC-001",
+      "name": "Protezione crittografica dei dati",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "status": "NOT_IMPLEMENTED",
+      "owner": "Luca Rinaldi",
+      "due_date": "2026-09-15",
+      "priority": "HIGH",
+      "evidence_count": 0,
+      "open_task_count": 1,
+      "folder_id": "tenant-michele-demo",
+      "description": "Standard crittografico per dataset critici da definire.",
+      "not_applicable_rationale": "",
+      "not_applicable_approved_by": null,
+      "not_applicable_approved_at": null
+    }
+  ],
+  "mappings": [
+    {
+      "requirement_id": "m-iso-a515",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.15",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito ISO-A.5.15 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-iso-a518",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.18",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito ISO-A.5.18 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-01",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito NIS2-01 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-01",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-01",
+      "canonical_control_id": "canon-ctrl-iam-001",
+      "canonical_control_ref": "CTRL-IAM-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-IAM-001 copre il requisito PSNC-01 nel perimetro del programma.",
+      "uncovered_delta": "È richiesta evidenza formale della revisione trimestrale degli accessi privilegiati per gli asset classificati critici.",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-iso-a524",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.24",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito ISO-A.5.24 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-02",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-02",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito NIS2-02 nel perimetro del programma.",
+      "uncovered_delta": "La procedura implementata non documenta ancora tutte le tempistiche di escalation/notifica richieste.",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-03",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-03",
+      "canonical_control_id": "canon-ctrl-ir-001",
+      "canonical_control_ref": "CTRL-IR-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-IR-001 copre il requisito PSNC-03 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-iso-a519",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.5.19",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-SUP-001 copre il requisito ISO-A.5.19 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-03",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-03",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-SUP-001 copre il requisito NIS2-03 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-sup",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-SUP",
+      "canonical_control_id": "canon-ctrl-sup-001",
+      "canonical_control_ref": "CTRL-SUP-001",
+      "relation": "SUPPORTING",
+      "rationale": "Supporto documentale alle clausole PSNC",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-04",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-04",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-BCP-001 copre il requisito NIS2-04 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-04",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-04",
+      "canonical_control_id": "canon-ctrl-bcp-001",
+      "canonical_control_ref": "CTRL-BCP-001",
+      "relation": "PARTIAL",
+      "rationale": "Il controllo CTRL-BCP-001 copre il requisito PSNC-04 nel perimetro del programma.",
+      "uncovered_delta": "Il test esistente non include ancora uno scenario specifico sul servizio critico.",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-iso-a815",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.8.15",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito ISO-A.8.15 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-02",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-02",
+      "canonical_control_id": "canon-ctrl-log-001",
+      "canonical_control_ref": "CTRL-LOG-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-LOG-001 copre il requisito PSNC-02 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-05",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-05",
+      "canonical_control_id": "canon-ctrl-gov-001",
+      "canonical_control_ref": "CTRL-GOV-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-GOV-001 copre il requisito NIS2-05 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-iso-a88",
+      "framework_id": "fw-iso27001-2022",
+      "framework_name": "ISO/IEC 27001",
+      "framework_version": "2022",
+      "requirement_code": "ISO-A.8.8",
+      "canonical_control_id": "canon-ctrl-vuln-001",
+      "canonical_control_ref": "CTRL-VULN-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-VULN-001 copre il requisito ISO-A.8.8 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-nis2-06",
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "requirement_code": "NIS2-06",
+      "canonical_control_id": "canon-ctrl-vuln-001",
+      "canonical_control_ref": "CTRL-VULN-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-VULN-001 copre il requisito NIS2-06 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    },
+    {
+      "requirement_id": "m-psnc-05",
+      "framework_id": "fw-psnc-2025-3",
+      "framework_name": "PSNC",
+      "framework_version": "2025.3",
+      "requirement_code": "PSNC-05",
+      "canonical_control_id": "canon-ctrl-enc-001",
+      "canonical_control_ref": "CTRL-ENC-001",
+      "relation": "FULL",
+      "rationale": "Il controllo CTRL-ENC-001 copre il requisito PSNC-05 nel perimetro del programma.",
+      "uncovered_delta": "",
+      "notes": "",
+      "review_status": "APPROVED"
+    }
+  ],
+  "requirement_implementation_links": {
+    "m-iso-a515": [
+      "m-impl-iam"
+    ],
+    "m-iso-a518": [
+      "m-impl-iam"
+    ],
+    "m-nis2-01": [
+      "m-impl-iam"
+    ],
+    "m-psnc-01": [
+      "m-impl-iam"
+    ],
+    "m-iso-a524": [
+      "m-impl-ir"
+    ],
+    "m-nis2-02": [
+      "m-impl-ir"
+    ],
+    "m-psnc-03": [
+      "m-impl-ir"
+    ],
+    "m-iso-a519": [
+      "m-impl-sup"
+    ],
+    "m-nis2-03": [
+      "m-impl-sup"
+    ],
+    "m-psnc-sup": [
+      "m-impl-sup"
+    ],
+    "m-nis2-04": [
+      "m-impl-bcp"
+    ],
+    "m-psnc-04": [
+      "m-impl-bcp"
+    ],
+    "m-iso-a815": [
+      "m-impl-log"
+    ],
+    "m-psnc-02": [
+      "m-impl-log"
+    ],
+    "m-nis2-05": [
+      "m-impl-gov"
+    ],
+    "m-iso-a88": [
+      "m-impl-vuln"
+    ],
+    "m-nis2-06": [
+      "m-impl-vuln"
+    ],
+    "m-psnc-05": [
+      "m-impl-enc"
+    ]
+  },
+  "evidences": [
+    {
+      "id": "EV-001",
+      "title": "Access Control Policy v4",
+      "filename": "Access Control Policy v4.pdf",
+      "control_refs": [
+        "CTRL-IAM-001",
+        "CTRL-GOV-001"
+      ],
+      "status": "VALID",
+      "valid_until": "2027-08-01",
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "EV-002",
+      "title": "PAM Configuration Export",
+      "filename": "PAM Configuration Export.json",
+      "control_refs": [
+        "CTRL-IAM-001"
+      ],
+      "status": "EXPIRING",
+      "valid_until": null,
+      "review_by": "2026-08-31",
+      "notes": ""
+    },
+    {
+      "id": "EV-003",
+      "title": "Q2 Privileged Access Review",
+      "filename": "Q2 Privileged Access Review.csv",
+      "control_refs": [
+        "CTRL-IAM-001"
+      ],
+      "status": "PARTIAL",
+      "valid_until": null,
+      "review_by": null,
+      "notes": "non include subset asset critici"
+    },
+    {
+      "id": "EV-004",
+      "title": "Incident Response Plan v3",
+      "filename": "Incident Response Plan v3.pdf",
+      "control_refs": [
+        "CTRL-IR-001",
+        "CTRL-BCP-001"
+      ],
+      "status": "VALID",
+      "valid_until": "2027-01-15",
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "EV-005",
+      "title": "Incident Exercise Report",
+      "filename": "Incident Exercise Report.pdf",
+      "control_refs": [
+        "CTRL-IR-001"
+      ],
+      "status": "VALID",
+      "valid_until": "2026-12-01",
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "EV-006",
+      "title": "BCP Exercise Report 2026",
+      "filename": "BCP Exercise Report 2026.pdf",
+      "control_refs": [
+        "CTRL-BCP-001"
+      ],
+      "status": "VALID",
+      "valid_until": "2027-03-01",
+      "review_by": null,
+      "notes": ""
+    },
+    {
+      "id": "EV-007",
+      "title": "SIEM Retention Configuration",
+      "filename": "SIEM Retention Configuration.txt",
+      "control_refs": [
+        "CTRL-LOG-001"
+      ],
+      "status": "REVIEW_REQUIRED",
+      "valid_until": null,
+      "review_by": "2026-08-25",
+      "notes": ""
+    },
+    {
+      "id": "EV-008",
+      "title": "Supplier Security Procedure Draft",
+      "filename": "Supplier Security Procedure Draft.pdf",
+      "control_refs": [
+        "CTRL-SUP-001"
+      ],
+      "status": "PARTIAL",
+      "valid_until": null,
+      "review_by": null,
+      "notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Completare recertificazione accessi privilegiati sugli asset critici",
+      "control_ref": "CTRL-IAM-001",
+      "owner": "Luca Rinaldi",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-07",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "TASK-002",
+      "title": "Formalizzare processo di due diligence fornitori",
+      "control_ref": "CTRL-SUP-001",
+      "owner": "Sara Bianchi",
+      "status": "TODO",
+      "due_date": "2026-08-18",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "TASK-003",
+      "title": "Integrare tempistiche regolatorie nella matrice incidenti",
+      "control_ref": "CTRL-IR-001",
+      "owner": "Sara Moretti",
+      "status": "REVIEW",
+      "due_date": "2026-08-20",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "TASK-004",
+      "title": "Aggiornare scenario BCP per sistema critico",
+      "control_ref": "CTRL-BCP-001",
+      "owner": "Marco Conti",
+      "status": "TODO",
+      "due_date": "2026-08-29",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "TASK-005",
+      "title": "Validare retention SIEM",
+      "control_ref": "CTRL-LOG-001",
+      "owner": "Luca Rinaldi",
+      "status": "IN_PROGRESS",
+      "due_date": "2026-08-25",
+      "priority": "MEDIUM",
+      "notes": ""
+    },
+    {
+      "id": "TASK-006",
+      "title": "Aggiornare policy di governance",
+      "control_ref": "CTRL-GOV-001",
+      "owner": "Michele Ferri",
+      "status": "DONE",
+      "due_date": "2026-07-15",
+      "priority": "LOW",
+      "notes": ""
+    },
+    {
+      "id": "TASK-007",
+      "title": "Definire standard crittografico per dataset critici",
+      "control_ref": "CTRL-ENC-001",
+      "owner": "Luca Rinaldi",
+      "status": "TODO",
+      "due_date": "2026-09-15",
+      "priority": "HIGH",
+      "notes": ""
+    },
+    {
+      "id": "TASK-008",
+      "title": "Analizzare requirement PSNC-06 non mappato",
+      "control_ref": null,
+      "owner": "Michele Ferri",
+      "status": "TODO",
+      "due_date": "2026-09-01",
+      "priority": "MEDIUM",
+      "notes": "Knowledge Base / mapping"
+    }
+  ],
+  "available_framework_versions": [
+    {
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.2",
+      "version": "2026.2",
+      "status": "DRAFT",
+      "assigned_to_program": false,
+      "notes": "Nuova versione disponibile — programma pinned a 2026.1"
+    },
+    {
+      "framework_id": "fw-nis2-it-2026-1",
+      "framework_name": "NIS2 Italia",
+      "framework_version": "2026.1",
+      "version": "2026.1",
+      "status": "PUBLISHED",
+      "assigned_to_program": true
+    }
+  ]
+}

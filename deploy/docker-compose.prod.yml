@@ -1,0 +1,137 @@
+# WayFold Compliance — production stack (GRC core substrate + product engine)
+# Binds only to localhost; nginx terminates TLS for compliance.wayfold.xyz
+# WAYFOLD_COMPLIANCE_ROOT must be the app root (set by update-remote.sh).
+# Product brand is WayFold Compliance — vendor image names are implementation-only.
+services:
+  backend:
+    container_name: wayfold-compliance-backend
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:latest
+    pull_policy: always
+    restart: always
+    environment:
+      - ALLOWED_HOSTS=backend,localhost,127.0.0.1,compliance.wayfold.xyz
+      - CISO_ASSISTANT_URL=https://compliance.wayfold.xyz
+      - DJANGO_DEBUG=False
+      - AUTH_TOKEN_TTL=7200
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+      - QDRANT_URL=http://qdrant:6333
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    volumes:
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/db:/code/db
+    user: "1001:1001"
+    ports:
+      - "127.0.0.1:18000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://backend:8000/api/health/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 40
+      start_period: 180s
+
+  huey:
+    container_name: wayfold-compliance-huey
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:latest
+    pull_policy: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    environment:
+      - ALLOWED_HOSTS=backend,localhost,127.0.0.1,compliance.wayfold.xyz
+      - CISO_ASSISTANT_URL=https://compliance.wayfold.xyz
+      - DJANGO_DEBUG=False
+      - AUTH_TOKEN_TTL=7200
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+      - QDRANT_URL=http://qdrant:6333
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    volumes:
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/db:/code/db
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        python manage.py run_huey -w 2 --scheduler-interval 60
+    user: "1001:1001"
+
+  frontend:
+    container_name: wayfold-compliance-frontend
+    image: ghcr.io/intuitem/ciso-assistant-community/frontend:latest
+    pull_policy: always
+    restart: always
+    environment:
+      - PUBLIC_BACKEND_API_URL=http://backend:8000/api
+      - PUBLIC_BACKEND_API_EXPOSED_URL=https://compliance.wayfold.xyz/api
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    depends_on:
+      backend:
+        condition: service_healthy
+    user: "1001:1001"
+    ports:
+      - "127.0.0.1:13000:3000"
+
+  qdrant:
+    container_name: wayfold-compliance-qdrant
+    image: qdrant/qdrant:v1.14.0
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "127.0.0.1:16333:6333"
+
+  engine:
+    container_name: wayfold-compliance-engine
+    image: python:3.12-slim
+    restart: always
+    working_dir: /app
+    command: ["python", "-m", "engine.api", "--host", "0.0.0.0", "--port", "8092"]
+    env_file:
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/engine/.auth.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Hardening: public workspace requires login session
+      - WAYFOLD_OPEN_ACCESS=0
+      - WAYFOLD_ALLOW_QS_AUTH=0
+      # No demo fixtures / seed data in production
+      - WAYFOLD_SEED_DEMO=0
+      - WAYFOLD_DATA_DIR=/var/lib/wayfold-compliance
+    volumes:
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}:/app:ro
+      - ${WAYFOLD_COMPLIANCE_ROOT:-.}/data/engine:/var/lib/wayfold-compliance
+    ports:
+      - "127.0.0.1:18092:8092"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  qdrant_data:
